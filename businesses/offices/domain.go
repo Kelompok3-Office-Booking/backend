@@ -3,7 +3,7 @@ package offices
 import (
 	"time"
 
-	// "github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 )
 
@@ -38,10 +38,10 @@ type SearchOffice interface {
 	SearchByRate(rate string) []Domain
 }
 
-// func (input *DomainInput) Validate() error {
-// 	validate := validator.New()
+func (input *DomainInput) Validate() error {
+	validate := validator.New()
 
-// 	err := validate.Struct(input)
+	err := validate.Struct(input)
 
-// 	return err
-// }
+	return err
+}
