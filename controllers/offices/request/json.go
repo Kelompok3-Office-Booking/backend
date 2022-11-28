@@ -1,23 +1,30 @@
 package request
 
-// import (
-// 	"backend/businesses/offices"
-// )
+import (
+	"backend/businesses/offices"
 
-// type SearchOfficeImpl struct {}
+	"github.com/go-playground/validator/v10"
+)
 
-// func (*SearchOfficeImpl) SearchByCity(city string) []offices.Domain {
-// 	var search []offices.Domain
+type Office struct {
+	Title       string `json:"title" validate:"required"`
+	Description string `json:"description" validate:"required"`
+	City        string `json:"city" validate:"required"`
+	Rate        uint   `json:"rate" validate:"required"`
+}
 
-// 	gorm.DB.Find(&search, "city = ?", city)
+func (req *Office) ToDomainCreate() *offices.Domain {
+	return &offices.Domain{
+		Title:       req.Title,
+		Description: req.Description,
+		City:        req.City,
+	}
+}
 
-// 	return search
-// }
+func (req *Office) Validate() error {
+	validate := validator.New()
 
-// func (*SearchOfficeImpl) SearchByRate(rate string) []offices.Domain {
-// 	var search []offices.Domain
+	err := validate.Struct(req)
 
-// 	gorm.DB.Find(&search, "rate = ?", rate)
-
-// 	return search
-// }
+	return err
+}
