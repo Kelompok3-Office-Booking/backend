@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"log"
 
+	"backend/drivers/mysql/offices"
 	"backend/drivers/mysql/users"
 
 	_utils "backend/utils"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -44,7 +46,7 @@ func (config *ConfigDB) InitDB() *gorm.DB {
 }
 
 func DBMigrate(db *gorm.DB) {
-	db.AutoMigrate(&users.User{})
+	db.AutoMigrate(&users.User{}, &offices.Office{})
 }
 
 func CloseDB(db *gorm.DB) error {

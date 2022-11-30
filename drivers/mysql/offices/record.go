@@ -1,4 +1,4 @@
-package response
+package offices
 
 import (
 	"backend/businesses/offices"
@@ -18,8 +18,8 @@ type Office struct {
 	Rate        string         `json:"rate"`
 }
 
-func FromDomain(domain offices.Domain) Office {
-	return Office{
+func FromDomain(domain *offices.Domain) *Office {
+	return &Office{
 		ID:          domain.ID,
 		CreatedAt:   domain.CreatedAt,
 		UpdatedAt:   domain.UpdatedAt,
@@ -28,5 +28,18 @@ func FromDomain(domain offices.Domain) Office {
 		Description: domain.Description,
 		City:        domain.City,
 		Rate:        domain.Rate,
+	}
+}
+
+func (rec *Office) ToDomain() offices.Domain {
+	return offices.Domain{
+		ID:          rec.ID,
+		CreatedAt:   rec.CreatedAt,
+		UpdatedAt:   rec.UpdatedAt,
+		DeletedAt:   rec.DeletedAt,
+		Title:       rec.Title,
+		Description: rec.Description,
+		City:        rec.City,
+		Rate:        rec.Rate,
 	}
 }

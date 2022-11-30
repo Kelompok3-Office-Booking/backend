@@ -1,9 +1,10 @@
 package drivers
 
 import (
+	officeDomain "backend/businesses/offices"
 	userDomain "backend/businesses/users"
-	// officeDomain "backend/businesses/offices"
 
+	officeDB "backend/drivers/mysql/offices"
 	userDB "backend/drivers/mysql/users"
 
 	"gorm.io/gorm"
@@ -13,6 +14,6 @@ func NewUserRepository(conn *gorm.DB) userDomain.Repository {
 	return userDB.NewMySQLRepository(conn)
 }
 
-// func OfficeRepository(conn *gorm.DB) officeDomain.OfficeRepository {
-
-// }
+func NewOfficeRepository(conn *gorm.DB) officeDomain.Repository {
+	return officeDB.OfficeMySQLRepository(conn)
+}
