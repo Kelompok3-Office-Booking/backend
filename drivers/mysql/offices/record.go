@@ -17,8 +17,8 @@ type Office struct {
 	OfficeType   string         `gorm:"type:enum('office', 'coworking', 'meeting room')" json:"office_type" form:"office_type"`
 	OfficeLength uint           `json:"office_length" form:"office_length"`
 	PricePerHour uint           `json:"price_per_hour" form:"price_per_hour"`
-	Lat          float64        `gorm:"type:decimal(10,8)" json:"lat" form:"lat"`
-	Lng          float64        `gorm:"type:decimal(11,8)" json:"lng" form:"lng"`
+	Lat          float64        `gorm:"type:decimal(10,7)" json:"lat" form:"lat"`
+	Lng          float64        `gorm:"type:decimal(11,7)" json:"lng" form:"lng"`
 	Accommodate  uint           `json:"accommodate" form:"accommodate"`
 	WorkingDesk  uint           `json:"working_desk" form:"working_desk"`
 	MeetingRoom  uint           `json:"meeting_room" form:"meeting_room"`

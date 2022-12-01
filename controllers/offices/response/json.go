@@ -17,8 +17,8 @@ type Office struct {
 	OfficeType   string  `json:"office_type" form:"office_type"`
 	OfficeLength uint    `json:"office_length" form:"office_length"`
 	PricePerHour uint    `json:"price_per_hour" form:"price_per_hour"`
-	Lat          float64 `json:"lat" gorm:"type:decimal(10,8)" form:"lat"`
-	Lng          float64 `json:"lng" gorm:"type:decimal(11,8)" form:"lng"`
+	Lat          float64 `json:"lat" gorm:"type:decimal(10,7)" form:"lat"`
+	Lng          float64 `json:"lng" gorm:"type:decimal(11,7)" form:"lng"`
 	Accommodate  uint    `json:"accommodate" form:"accommodate"`
 	WorkingDesk  uint    `json:"working_desk" form:"working_desk"`
 	MeetingRoom  uint    `json:"meeting_room" form:"meeting_room"`
@@ -47,8 +47,8 @@ func FromDomain(domain offices.Domain) Office {
 		District:     cases.Title(language.English).String(domain.District),
 		Address:      cases.Title(language.English).String(domain.Address),
 		Rate:         domain.Rate,
-		CreatedAt:    domain.CreatedAt.Format("01-02-2006 15:04:05"),
-		UpdatedAt:    domain.UpdatedAt.Format("01-02-2006 15:04:05"),
+		CreatedAt:    domain.CreatedAt.Format("02-01-2006 15:04:05"),
+		UpdatedAt:    domain.UpdatedAt.Format("02-01-2006 15:04:05"),
 		DeletedAt:    domain.DeletedAt.Time.Format("01-02-2006 15:04:05"),
 	}
 }
