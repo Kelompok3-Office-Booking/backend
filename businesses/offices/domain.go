@@ -14,22 +14,24 @@ type Domain struct {
 	Title       string
 	Description string
 	City        string
-	Rate        string
+	Rate        uint
 }
 
 type Usecase interface {
-	Create(officeDomain *Domain) Domain
 	GetAll() []Domain
 	GetByID(id string) Domain
+	Create(officeDomain *Domain) Domain
+	Update(id string, noteDomain *Domain) Domain
 	Delete(id string) bool
 	SearchByCity(city string) []Domain
 	SearchByRate(rate string) []Domain
 }
 
 type Repository interface {
-	Create(officeDomain *Domain) Domain
 	GetAll() []Domain
 	GetByID(id string) Domain
+	Create(officeDomain *Domain) Domain
+	Update(id string, noteDomain *Domain) Domain
 	Delete(id string) bool
 	SearchByCity(city string) []Domain
 	SearchByRate(rate string) []Domain

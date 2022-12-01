@@ -10,25 +10,10 @@ type officeRepository struct {
 	conn *gorm.DB
 }
 
-func OfficeMySQLRepository(conn *gorm.DB) offices.Repository {
+func NewMySQLRepository(conn *gorm.DB) offices.Repository {
 	return &officeRepository{
 		conn: conn,
 	}
-}
-
-func (or *officeRepository) Create(officeDomain *offices.Domain) offices.Domain {
-
-	rec := FromDomain(officeDomain)
-
-	rec.Title = ""
-	rec.Description = ""
-	rec.City = ""
-	rec.Rate = ""
-
-	result := or.conn.Create(&rec)
-	result.Last(&rec)
-
-	return rec.ToDomain()
 }
 
 func (or *officeRepository) GetAll() []offices.Domain {
@@ -53,6 +38,30 @@ func (or *officeRepository) GetByID(id string) offices.Domain {
 	return office.ToDomain()
 }
 
+func (or *officeRepository) Create(officeDomain *offices.Domain) offices.Domain {
+	rec := FromDomain(officeDomain)
+
+	result := or.conn.Create(&rec)
+
+	result.Last(&rec)
+
+	return rec.ToDomain()
+}
+
+func (or *officeRepository) Update(id string, officeDomain *offices.Domain) offices.Domain {
+	var office offices.Domain = or.GetByID(id)
+
+	updatedOffice := FromDomain(&office)
+
+	updatedOffice.Title = officeDomain.Title
+	updatedOffice.Description = officeDomain.Description
+	updatedOffice.City = officeDomain.City
+
+	or.conn.Save(&updatedOffice)
+
+	return updatedOffice.ToDomain()
+}
+
 func (or *officeRepository) Delete(id string) bool {
 	var office offices.Domain = or.GetByID(id)
 
@@ -60,21 +69,37 @@ func (or *officeRepository) Delete(id string) bool {
 
 	result := or.conn.Delete(&deletedOffice)
 
-	return result.RowsAffected != 0
+	if result.RowsAffected == 0 {
+		return false
+	}
+
+	return true
 }
 
 func (or *officeRepository) SearchByCity(city string) []offices.Domain {
-	var search []offices.Domain
+	var rec []Office
 
-	or.conn.Find(&search, "city = ?", city)
+	or.conn.Find(&rec, "city = ?", city)
 
-	return search
+	officeDomain := []offices.Domain{}
+
+	for _, office := range rec {
+		officeDomain = append(officeDomain, office.ToDomain())
+	}
+
+	return officeDomain
 }
 
 func (or *officeRepository) SearchByRate(rate string) []offices.Domain {
-	var search []offices.Domain
+	var rec []Office
 
-	or.conn.Find(&search, "rate = ?", rate)
+	or.conn.Find(&rec, "rate = ?", rate)
 
-	return search
+	officeDomain := []offices.Domain{}
+
+	for _, office := range rec {
+		officeDomain = append(officeDomain, office.ToDomain())
+	}
+
+	return officeDomain
 }

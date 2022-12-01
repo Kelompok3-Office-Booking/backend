@@ -15,18 +15,18 @@ type Office struct {
 	Title       string         `json:"title"`
 	Description string         `json:"description"`
 	City        string         `json:"city"`
-	Rate        string         `json:"rate"`
+	Rate        uint           `json:"rate"`
 }
 
 func FromDomain(domain offices.Domain) Office {
 	return Office{
 		ID:          domain.ID,
-		CreatedAt:   domain.CreatedAt,
-		UpdatedAt:   domain.UpdatedAt,
-		DeletedAt:   domain.DeletedAt,
 		Title:       domain.Title,
 		Description: domain.Description,
 		City:        domain.City,
 		Rate:        domain.Rate,
+		CreatedAt:   domain.CreatedAt,
+		UpdatedAt:   domain.UpdatedAt,
+		DeletedAt:   domain.DeletedAt,
 	}
 }

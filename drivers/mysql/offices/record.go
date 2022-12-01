@@ -1,7 +1,7 @@
 package offices
 
 import (
-	"backend/businesses/offices"
+	officeUsecase "backend/businesses/offices"
 	"time"
 
 	"gorm.io/gorm"
@@ -15,31 +15,31 @@ type Office struct {
 	Title       string         `json:"title"`
 	Description string         `json:"description"`
 	City        string         `json:"city"`
-	Rate        string         `json:"rate"`
+	Rate        uint           `json:"rate"`
 }
 
-func FromDomain(domain *offices.Domain) *Office {
+func FromDomain(domain *officeUsecase.Domain) *Office {
 	return &Office{
 		ID:          domain.ID,
-		CreatedAt:   domain.CreatedAt,
-		UpdatedAt:   domain.UpdatedAt,
-		DeletedAt:   domain.DeletedAt,
 		Title:       domain.Title,
 		Description: domain.Description,
 		City:        domain.City,
 		Rate:        domain.Rate,
+		CreatedAt:   domain.CreatedAt,
+		UpdatedAt:   domain.UpdatedAt,
+		DeletedAt:   domain.DeletedAt,
 	}
 }
 
-func (rec *Office) ToDomain() offices.Domain {
-	return offices.Domain{
+func (rec *Office) ToDomain() officeUsecase.Domain {
+	return officeUsecase.Domain{
 		ID:          rec.ID,
-		CreatedAt:   rec.CreatedAt,
-		UpdatedAt:   rec.UpdatedAt,
-		DeletedAt:   rec.DeletedAt,
 		Title:       rec.Title,
 		Description: rec.Description,
 		City:        rec.City,
 		Rate:        rec.Rate,
+		CreatedAt:   rec.CreatedAt,
+		UpdatedAt:   rec.UpdatedAt,
+		DeletedAt:   rec.DeletedAt,
 	}
 }

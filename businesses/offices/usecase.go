@@ -10,26 +10,30 @@ func NewOfficeUsecase(or Repository) Usecase {
 	}
 }
 
-func (n *OfficeUsecase) Create(input *Domain) Domain {
-	return n.officeRepository.Create(input)
+func (ou *OfficeUsecase) GetAll() []Domain {
+	return ou.officeRepository.GetAll()
 }
 
-func (n *OfficeUsecase) GetAll() []Domain {
-	return n.officeRepository.GetAll()
+func (ou *OfficeUsecase) GetByID(id string) Domain {
+	return ou.officeRepository.GetByID(id)
 }
 
-func (n *OfficeUsecase) GetByID(id string) Domain {
-	return n.officeRepository.GetByID(id)
+func (ou *OfficeUsecase) Create(officeDomain *Domain) Domain {
+	return ou.officeRepository.Create(officeDomain)
 }
 
-func (n *OfficeUsecase) Delete(id string) bool {
-	return n.officeRepository.Delete(id)
+func (ou *OfficeUsecase) Update(id string, officeDomain *Domain) Domain {
+	return ou.officeRepository.Update(id, officeDomain)
 }
 
-func (n *OfficeUsecase) SearchByCity(city string) []Domain {
-	return n.officeRepository.SearchByCity(city)
+func (ou *OfficeUsecase) Delete(id string) bool {
+	return ou.officeRepository.Delete(id)
 }
 
-func (n *OfficeUsecase) SearchByRate(rate string) []Domain {
-	return n.officeRepository.SearchByRate(rate)
+func (ou *OfficeUsecase) SearchByCity(city string) []Domain {
+	return ou.officeRepository.SearchByCity(city)
+}
+
+func (ou *OfficeUsecase) SearchByRate(rate string) []Domain {
+	return ou.officeRepository.SearchByRate(rate)
 }

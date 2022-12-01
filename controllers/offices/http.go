@@ -22,26 +22,10 @@ func NewOfficeController(officeUC offices.Usecase) *OfficeController {
 	}
 }
 
-func (oc *OfficeController) Create(c echo.Context) error {
-	officeInput := request.Office{}
-
-	if err := c.Bind(&officeInput); err != nil {
-		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "invalid request")
-	}
-
-	err := officeInput.Validate()
-	if err != nil {
-		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "validation failed")
-	}
-
-	office := oc.officeUsecase.Create(officeInput.ToDomainCreate())
-
-	return ctrl.NewResponse(c, http.StatusCreated, "success", "office created", response.FromDomain(office))
-}
-
 func (oc *OfficeController) GetAll(c echo.Context) error {
-	offices := []response.Office{}
 	officesData := oc.officeUsecase.GetAll()
+
+	offices := []response.Office{}
 
 	for _, office := range officesData {
 		offices = append(offices, response.FromDomain(office))
@@ -51,25 +35,69 @@ func (oc *OfficeController) GetAll(c echo.Context) error {
 }
 
 func (oc *OfficeController) GetByID(c echo.Context) error {
-	paramsId := c.Param("id")
-	office := oc.officeUsecase.GetByID(paramsId)
+	var id string = c.Param("id")
+
+	office := oc.officeUsecase.GetByID(id)
 
 	if office.ID == 0 {
-		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "office not found")
+		return ctrl.NewResponse(c, http.StatusNotFound, "failed", "office not found", "")
 	}
 
 	return ctrl.NewResponse(c, http.StatusOK, "success", "office found", response.FromDomain(office))
 }
 
-func (oc *OfficeController) Delete(c echo.Context) error {
-	paramsId := c.Param("id")
-	isSuccess := oc.officeUsecase.Delete(paramsId)
+func (oc *OfficeController) Create(c echo.Context) error {
+	input := request.Office{}
 
-	if !isSuccess {
-		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "office not found")
+	if err := c.Bind(&input); err != nil {
+		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", "")
 	}
 
-	return ctrl.NewInfoResponse(c, http.StatusOK, "success", "office deleted")
+	err := input.Validate()
+
+	if err != nil {
+		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", "")
+	}
+
+	office := oc.officeUsecase.Create(input.ToDomain())
+
+	return ctrl.NewResponse(c, http.StatusCreated, "success", "office created", response.FromDomain(office))
+}
+
+func (oc *OfficeController) Update(c echo.Context) error {
+	input := request.Office{}
+
+	if err := c.Bind(&input); err != nil {
+		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", "")
+	}
+
+	var officeId string = c.Param("id")
+
+	err := input.Validate()
+
+	if err != nil {
+		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", "")
+	}
+
+	office := oc.officeUsecase.Update(officeId, input.ToDomain())
+
+	if office.ID == 0 {
+		return ctrl.NewResponse(c, http.StatusNotFound, "failed", "office not found", "")
+	}
+
+	return ctrl.NewResponse(c, http.StatusOK, "success", "office updated", response.FromDomain(office))
+}
+
+func (oc *OfficeController) Delete(c echo.Context) error {
+	var officeId string = c.Param("id")
+
+	isSuccess := oc.officeUsecase.Delete(officeId)
+
+	if !isSuccess {
+		return ctrl.NewResponse(c, http.StatusNotFound, "failed", "office not found", "")
+	}
+
+	return ctrl.NewResponse(c, http.StatusOK, "success", "office deleted", "")
 }
 
 func (oc *OfficeController) SearchByCity(c echo.Context) error {

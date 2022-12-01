@@ -10,10 +10,10 @@ type Office struct {
 	Title       string `json:"title" validate:"required"`
 	Description string `json:"description" validate:"required"`
 	City        string `json:"city" validate:"required"`
-	Rate        string `json:"rate" validate:"required"`
+	Rate        uint   `json:"rate" validate:"required"`
 }
 
-func (req *Office) ToDomainCreate() *offices.Domain {
+func (req *Office) ToDomain() *offices.Domain {
 	return &offices.Domain{
 		Title:       req.Title,
 		Description: req.Description,

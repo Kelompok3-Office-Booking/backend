@@ -15,5 +15,5 @@ func NewUserRepository(conn *gorm.DB) userDomain.Repository {
 }
 
 func NewOfficeRepository(conn *gorm.DB) officeDomain.Repository {
-	return officeDB.OfficeMySQLRepository(conn)
+	return officeDB.NewMySQLRepository(conn)
 }

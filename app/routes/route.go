@@ -29,9 +29,11 @@ func (cl *ControllerList) RouteRegister(e *echo.Echo) {
 	users.PUT("/:id", cl.AuthController.UpdateProfileData).Name = "update-profile-data"
 
 	offices := e.Group("/api/v1/offices", middleware.JWTWithConfig(cl.JWTMiddleware))
-	offices.POST("", cl.OfficeController.Create).Name = "create-office"
+
 	offices.GET("", cl.OfficeController.GetAll).Name = "get-all-offices"
 	offices.GET("/:id", cl.OfficeController.GetByID).Name = "get-office-by-id"
+	offices.POST("", cl.OfficeController.Create).Name = "create-office"
+	offices.PUT("", cl.OfficeController.Update).Name = "update-office"
 	offices.DELETE("/:id", cl.OfficeController.Delete).Name = "delete-office"
 	offices.GET("/:city", cl.OfficeController.SearchByCity).Name = "group-office-by-city"
 	offices.GET("/:rate", cl.OfficeController.SearchByRate).Name = "group-office-by-rate"
