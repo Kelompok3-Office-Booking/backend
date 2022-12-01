@@ -13,8 +13,19 @@ type Domain struct {
 	DeletedAt   gorm.DeletedAt
 	Title       string
 	Description string
+	OfficeType 	string
+	OfficeLength uint
+	PricePerHour uint
+	Lat			float64
+	Lng			float64
+	Accommodate	uint
+	WorkingDesk	uint
+	MeetingRoom	uint
+	PrivateRoom uint
 	City        string
-	Rate        uint
+	District	string
+	Address		string
+	Rate        float64
 }
 
 type Usecase interface {
