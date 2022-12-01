@@ -2,6 +2,7 @@ package offices
 
 import (
 	"backend/businesses/offices"
+	"backend/helper"
 
 	ctrl "backend/controllers"
 	"backend/controllers/offices/request"
@@ -47,10 +48,31 @@ func (oc *OfficeController) GetByID(c echo.Context) error {
 }
 
 func (oc *OfficeController) Create(c echo.Context) error {
-	input := request.Office{}
+	inputTemp := request.OfficeTemp{}
 
-	if err := c.Bind(&input); err != nil {
+	if err := c.Bind(&inputTemp); err != nil {
 		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", "")
+	}
+
+	openHourTemp, closeHourTemp := helper.ConvertShiftClockToShiftTime(inputTemp.OpenHour, inputTemp.CloseHour)
+
+	input := request.Office{
+		Title: inputTemp.Title,
+		Description: inputTemp.Description,
+		OfficeType: inputTemp.OfficeType,
+		OfficeLength: inputTemp.OfficeLength,
+		PricePerHour: inputTemp.PricePerHour,
+		OpenHour: openHourTemp,
+		CloseHour: closeHourTemp,
+		Lat: inputTemp.Lat,
+		Lng: inputTemp.Lng,
+		Accommodate: inputTemp.Accommodate,
+		WorkingDesk: inputTemp.WorkingDesk,
+		MeetingRoom: inputTemp.MeetingRoom,
+		PrivateRoom: inputTemp.PrivateRoom,
+		City: inputTemp.City,
+		District: inputTemp.District,
+		Address: inputTemp.Address,
 	}
 
 	err := input.Validate()

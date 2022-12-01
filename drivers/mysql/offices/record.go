@@ -17,6 +17,8 @@ type Office struct {
 	OfficeType   string         `gorm:"type:enum('office', 'coworking', 'meeting room')" json:"office_type" form:"office_type"`
 	OfficeLength uint           `json:"office_length" form:"office_length"`
 	PricePerHour uint           `json:"price_per_hour" form:"price_per_hour"`
+	OpenHour     time.Time      `json:"open_hour" gorm:"type:timestamp;not null;default:now()" form:"open_hour"`
+	CloseHour    time.Time      `json:"close_hour" gorm:"type:timestamp;not null;default:now()" form:"close_hour"`
 	Lat          float64        `gorm:"type:decimal(10,7)" json:"lat" form:"lat"`
 	Lng          float64        `gorm:"type:decimal(11,7)" json:"lng" form:"lng"`
 	Accommodate  uint           `json:"accommodate" form:"accommodate"`
@@ -37,6 +39,8 @@ func FromDomain(domain *officeUsecase.Domain) *Office {
 		OfficeType:   domain.OfficeType,
 		OfficeLength: domain.OfficeLength,
 		PricePerHour: domain.PricePerHour,
+		OpenHour:     domain.OpenHour,
+		CloseHour:    domain.CloseHour,
 		Lat:          domain.Lat,
 		Lng:          domain.Lng,
 		Accommodate:  domain.Accommodate,
@@ -61,6 +65,8 @@ func (rec *Office) ToDomain() officeUsecase.Domain {
 		OfficeType:   rec.OfficeType,
 		OfficeLength: rec.OfficeLength,
 		PricePerHour: rec.PricePerHour,
+		OpenHour:     rec.OpenHour,
+		CloseHour:    rec.CloseHour,
 		Lat:          rec.Lat,
 		Lng:          rec.Lng,
 		Accommodate:  rec.Accommodate,

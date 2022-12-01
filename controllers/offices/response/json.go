@@ -17,6 +17,8 @@ type Office struct {
 	OfficeType   string  `json:"office_type" form:"office_type"`
 	OfficeLength uint    `json:"office_length" form:"office_length"`
 	PricePerHour uint    `json:"price_per_hour" form:"price_per_hour"`
+	OpenHour     string  `json:"open_hour" form:"open_hour"`
+	CloseHour    string  `json:"close_hour" form:"close_hour"`
 	Lat          float64 `json:"lat" gorm:"type:decimal(10,7)" form:"lat"`
 	Lng          float64 `json:"lng" gorm:"type:decimal(11,7)" form:"lng"`
 	Accommodate  uint    `json:"accommodate" form:"accommodate"`
@@ -37,6 +39,8 @@ func FromDomain(domain offices.Domain) Office {
 		OfficeType:   domain.OfficeType,
 		OfficeLength: domain.OfficeLength,
 		PricePerHour: domain.PricePerHour,
+		OpenHour:     domain.OpenHour.Format("15:04"),
+		CloseHour:    domain.CloseHour.Format("15:04"),
 		Lat:          domain.Lat,
 		Lng:          domain.Lng,
 		Accommodate:  domain.Accommodate,
