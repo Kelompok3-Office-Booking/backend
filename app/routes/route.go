@@ -33,7 +33,7 @@ func (cl *ControllerList) RouteRegister(e *echo.Echo) {
 	offices.GET("", cl.OfficeController.GetAll).Name = "get-all-offices"
 	offices.GET("/:id", cl.OfficeController.GetByID).Name = "get-office-by-id"
 	offices.POST("", cl.OfficeController.Create).Name = "create-office"
-	offices.PUT("", cl.OfficeController.Update).Name = "update-office"
+	offices.PUT("/:id", cl.OfficeController.Update).Name = "update-office"
 	offices.DELETE("/:id", cl.OfficeController.Delete).Name = "delete-office"
 	offices.GET("/city/:city", cl.OfficeController.SearchByCity).Name = "group-office-by-city"
 	offices.GET("/rate/:rate", cl.OfficeController.SearchByRate).Name = "group-office-by-rate"

@@ -56,7 +56,21 @@ func (or *officeRepository) Update(id string, officeDomain *offices.Domain) offi
 
 	updatedOffice.Title = officeDomain.Title
 	updatedOffice.Description = officeDomain.Description
+	updatedOffice.OfficeType = officeDomain.OfficeType
+	updatedOffice.OfficeLength = officeDomain.OfficeLength
+	updatedOffice.PricePerHour = officeDomain.PricePerHour
+	updatedOffice.OpenHour = officeDomain.OpenHour
+	updatedOffice.CloseHour = officeDomain.CloseHour
+	updatedOffice.Lat = officeDomain.Lat
+	updatedOffice.Lng = officeDomain.Lng
+	updatedOffice.Accommodate = officeDomain.Accommodate
+	updatedOffice.WorkingDesk = officeDomain.WorkingDesk
+	updatedOffice.MeetingRoom = officeDomain.MeetingRoom
+	updatedOffice.PrivateRoom = officeDomain.PrivateRoom
 	updatedOffice.City = officeDomain.City
+	updatedOffice.District = officeDomain.District
+	updatedOffice.Address = officeDomain.Address
+	updatedOffice.Rate = officeDomain.Rate
 
 	or.conn.Save(&updatedOffice)
 
@@ -99,7 +113,7 @@ func (or *officeRepository) SearchByRate(rate string) []offices.Domain {
 	if intRate == 5 {
 		or.conn.Find(&rec, "rate = ?", rate)
 	} else {
-		or.conn.Where("rate >= ? AND rate < ?", rate, intRate + 1).Order("rate desc, title").Find(&rec)
+		or.conn.Where("rate >= ? AND rate < ?", rate, intRate+1).Order("rate desc, title").Find(&rec)
 	}
 
 	officeDomain := []offices.Domain{}
