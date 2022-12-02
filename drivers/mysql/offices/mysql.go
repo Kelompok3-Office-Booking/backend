@@ -110,3 +110,11 @@ func (or *officeRepository) SearchByRate(rate string) []offices.Domain {
 
 	return officeDomain
 }
+
+func (or *officeRepository) SearchByTitle(title string) offices.Domain {
+	var rec Office
+
+	or.conn.First(&rec, "title = ?", title)
+
+	return rec.ToDomain()
+}

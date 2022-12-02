@@ -37,3 +37,7 @@ func (ou *OfficeUsecase) SearchByCity(city string) []Domain {
 func (ou *OfficeUsecase) SearchByRate(rate string) []Domain {
 	return ou.officeRepository.SearchByRate(rate)
 }
+
+func (ou *OfficeUsecase) SearchByTitle(title string) Domain {
+	return ou.officeRepository.SearchByTitle(title)
+}

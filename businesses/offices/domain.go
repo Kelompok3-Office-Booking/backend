@@ -38,6 +38,7 @@ type Usecase interface {
 	Delete(id string) bool
 	SearchByCity(city string) []Domain
 	SearchByRate(rate string) []Domain
+	SearchByTitle(title string) Domain
 }
 
 type Repository interface {
@@ -48,4 +49,5 @@ type Repository interface {
 	Delete(id string) bool
 	SearchByCity(city string) []Domain
 	SearchByRate(rate string) []Domain
+	SearchByTitle(title string) Domain
 }

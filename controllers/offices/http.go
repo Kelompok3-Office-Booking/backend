@@ -158,3 +158,15 @@ func (oc *OfficeController) SearchByRate(c echo.Context) error {
 
 	return ctrl.NewResponse(c, http.StatusOK, "success", "grouping by rate", offices)
 }
+
+func (oc *OfficeController) SearchByTitle(c echo.Context) error {
+	var title string = c.QueryParam("search")
+
+	office := oc.officeUsecase.SearchByTitle(title)
+
+	if office.ID == 0 {
+		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "office not found")
+	}
+
+	return ctrl.NewResponse(c, http.StatusOK, "success", "office found", response.FromDomain(office))
+}
