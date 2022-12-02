@@ -54,7 +54,7 @@ func main() {
 
 	routesInit.RouteRegister(app)
 
-	var port string
+	var port string = os.Getenv("PORT")
 
 	if port == "" {
 		port = DEFAULT_PORT
