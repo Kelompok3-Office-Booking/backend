@@ -2,6 +2,7 @@ package offices
 
 import (
 	"backend/businesses/offices"
+	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -93,7 +94,13 @@ func (or *officeRepository) SearchByCity(city string) []offices.Domain {
 func (or *officeRepository) SearchByRate(rate string) []offices.Domain {
 	var rec []Office
 
-	or.conn.Find(&rec, "rate = ?", rate)
+	intRate, _ := strconv.Atoi(rate)
+
+	if intRate == 5 {
+		or.conn.Find(&rec, "rate = ?", rate)
+	} else {
+		or.conn.Where("rate >= ? AND rate < ?", rate, intRate + 1).Order("rate desc, title").Find(&rec)
+	}
 
 	officeDomain := []offices.Domain{}
 

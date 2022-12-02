@@ -3,6 +3,7 @@ package offices
 import (
 	"backend/businesses/offices"
 	"backend/helper"
+	"fmt"
 
 	ctrl "backend/controllers"
 	"backend/controllers/offices/request"
@@ -123,22 +124,36 @@ func (oc *OfficeController) Delete(c echo.Context) error {
 }
 
 func (oc *OfficeController) SearchByCity(c echo.Context) error {
+	var city string = c.Param("city")
+
 	offices := []response.Office{}
-	officesData := oc.officeUsecase.SearchByCity("city")
+
+	officesData := oc.officeUsecase.SearchByCity(city)
 
 	for _, office := range officesData {
 		offices = append(offices, response.FromDomain(office))
+	}
+
+	if len(offices) == 0 {
+		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", fmt.Sprintf("%s city not found", city))
 	}
 
 	return ctrl.NewResponse(c, http.StatusOK, "success", "grouping by city", offices)
 }
 
 func (oc *OfficeController) SearchByRate(c echo.Context) error {
+	var rate string = c.Param("rate")
+	
 	offices := []response.Office{}
-	officesData := oc.officeUsecase.SearchByRate("rate")
+	
+	officesData := oc.officeUsecase.SearchByRate(rate)
 
 	for _, office := range officesData {
 		offices = append(offices, response.FromDomain(office))
+	}
+
+	if len(offices) == 0 {
+		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", fmt.Sprintf("city with rate %s not found", rate))
 	}
 
 	return ctrl.NewResponse(c, http.StatusOK, "success", "grouping by rate", offices)

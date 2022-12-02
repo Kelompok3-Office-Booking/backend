@@ -35,8 +35,8 @@ func (cl *ControllerList) RouteRegister(e *echo.Echo) {
 	offices.POST("", cl.OfficeController.Create).Name = "create-office"
 	offices.PUT("", cl.OfficeController.Update).Name = "update-office"
 	offices.DELETE("/:id", cl.OfficeController.Delete).Name = "delete-office"
-	offices.GET("/:city", cl.OfficeController.SearchByCity).Name = "group-office-by-city"
-	offices.GET("/:rate", cl.OfficeController.SearchByRate).Name = "group-office-by-rate"
+	offices.GET("/city/:city", cl.OfficeController.SearchByCity).Name = "group-office-by-city"
+	offices.GET("/rate/:rate", cl.OfficeController.SearchByRate).Name = "group-office-by-rate"
 
 	auth := e.Group("/api/v1", middleware.JWTWithConfig(cl.JWTMiddleware))
 	auth.POST("/logout", cl.AuthController.Logout).Name = "user-logout"
