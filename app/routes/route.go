@@ -3,6 +3,7 @@ package routes
 import (
 	"backend/controllers/offices"
 	"backend/controllers/users"
+	officeimage "backend/controllers/office_images"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -13,6 +14,7 @@ type ControllerList struct {
 	JWTMiddleware    middleware.JWTConfig
 	AuthController   users.AuthController
 	OfficeController offices.OfficeController
+	OfficeImageController officeimage.OfficeImageController
 }
 
 func (cl *ControllerList) RouteRegister(e *echo.Echo) {

@@ -15,6 +15,9 @@ import (
 	_officeUseCase "backend/businesses/offices"
 	_officeController "backend/controllers/offices"
 
+	_officeImageUseCase "backend/businesses/office_images"
+	_officeImageController "backend/controllers/office_images"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -52,11 +55,16 @@ func main() {
 	officeUseCase := _officeUseCase.NewOfficeUsecase(officeRepo)
 	officeCtrl := _officeController.NewOfficeController(officeUseCase)
 
+	officeImageRepo := _driverFactory.NewOfficeImageRepository(db)
+	officeImageUseCase := _officeImageUseCase.NewOfficeImageUsecase(officeImageRepo)
+	officeImageCtrl := _officeImageController.NewOfficeImageController(officeImageUseCase)
+
 	routesInit := _routes.ControllerList{
 		LoggerMiddleware: configLogger.Init(),
 		JWTMiddleware:    configJWT.Init(),
 		AuthController:   *userCtrl,
 		OfficeController: *officeCtrl,
+		OfficeImageController: *officeImageCtrl,
 	}
 
 	routesInit.RouteRegister(app)
