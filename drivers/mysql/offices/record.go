@@ -29,6 +29,7 @@ type Office struct {
 	District     string         `json:"district" form:"district"`
 	Address      string         `json:"address" form:"address"`
 	Rate         float64        `json:"rate" form:"rate"`
+	Images       []string       `gorm:"-"`
 }
 
 func FromDomain(domain *officeUsecase.Domain) *Office {
@@ -51,6 +52,7 @@ func FromDomain(domain *officeUsecase.Domain) *Office {
 		District:     domain.District,
 		Address:      domain.Address,
 		Rate:         domain.Rate,
+		Images:       domain.Images,
 		CreatedAt:    domain.CreatedAt,
 		UpdatedAt:    domain.UpdatedAt,
 		DeletedAt:    domain.DeletedAt,
@@ -77,6 +79,7 @@ func (rec *Office) ToDomain() officeUsecase.Domain {
 		District:     rec.District,
 		Address:      rec.Address,
 		Rate:         rec.Rate,
+		Images:       rec.Images,
 		CreatedAt:    rec.CreatedAt,
 		UpdatedAt:    rec.UpdatedAt,
 		DeletedAt:    rec.DeletedAt,

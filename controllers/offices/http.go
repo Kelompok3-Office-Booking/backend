@@ -3,7 +3,9 @@ package offices
 import (
 	"backend/businesses/offices"
 	"backend/helper"
+	"context"
 	"fmt"
+	"strconv"
 
 	ctrl "backend/controllers"
 	"backend/controllers/offices/request"
@@ -49,13 +51,48 @@ func (oc *OfficeController) GetByID(c echo.Context) error {
 }
 
 func (oc *OfficeController) Create(c echo.Context) error {
+	ctx := context.Background()
+	var imageURLs []string
+	var countFiles int
 	inputTemp := request.OfficeTemp{}
 
 	if err := c.Bind(&inputTemp); err != nil {
-		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", "")
+		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "bind failed", "")
 	}
 
 	openHourTemp, closeHourTemp := helper.ConvertShiftClockToShiftTime(inputTemp.OpenHour, inputTemp.CloseHour)
+
+	// multipart form
+	form, err := c.MultipartForm()
+	
+	if err != nil {
+		return err
+	}
+	
+	files := form.File["images"]
+	
+	for _, file := range files {
+		isFileAllowed, isFileAllowedMessage := helper.IsFileAllowed(file)
+
+		if !isFileAllowed {
+			return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", isFileAllowedMessage)
+		}
+
+		countFiles++
+	}
+
+	// limit to only 4 files
+	if countFiles != 4 {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "please input four images only")
+	}
+	
+	imageURLs, err = helper.CloudinaryUploadOfficeImgs(ctx, files)
+
+	if err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusConflict, "failed", "conflict when upload file in cloud image")
+	}
+
+	inputTemp.Images = imageURLs
 
 	input := request.Office{
 		Title: inputTemp.Title,
@@ -74,9 +111,10 @@ func (oc *OfficeController) Create(c echo.Context) error {
 		City: inputTemp.City,
 		District: inputTemp.District,
 		Address: inputTemp.Address,
+		Images: inputTemp.Images,
 	}
 
-	err := input.Validate()
+	err = input.Validate()
 
 	if err != nil {
 		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", "")
@@ -84,19 +122,90 @@ func (oc *OfficeController) Create(c echo.Context) error {
 
 	office := oc.officeUsecase.Create(input.ToDomain())
 
-	return ctrl.NewResponse(c, http.StatusCreated, "success", "office created", response.FromDomain(office))
+	if office.ID == 0 {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "error when creating office")
+	}
+	
+	getOffice := oc.officeUsecase.GetByID(strconv.Itoa(int(office.ID)))
+
+	return ctrl.NewResponse(c, http.StatusCreated, "success", "office created", response.FromDomain(getOffice))
 }
 
 func (oc *OfficeController) Update(c echo.Context) error {
-	input := request.Office{}
+	var officeId string = c.Param("id")
+	ctx := context.Background()
+	inputTemp := request.OfficeTemp{}
+	var imageURLs []string
 
-	if err := c.Bind(&input); err != nil {
+	getOffice := oc.officeUsecase.GetByID(officeId)
+
+	if getOffice.ID == 0 {
+		return ctrl.NewResponse(c, http.StatusNotFound, "failed", "office not found", "")
+	}
+
+	if err := c.Bind(&inputTemp); err != nil {
 		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", "")
 	}
 
-	var officeId string = c.Param("id")
+	openHourTemp, closeHourTemp := helper.ConvertShiftClockToShiftTime(inputTemp.OpenHour, inputTemp.CloseHour)
 
-	err := input.Validate()
+	// multipart form
+	form, err := c.MultipartForm()
+	
+	if err != nil {
+		return err
+	}
+	
+	files := form.File["images"]
+
+	var countFiles int
+	
+	for _, file := range files {
+		isFileAllowed, isFileAllowedMessage := helper.IsFileAllowed(file)
+
+		if !isFileAllowed {
+			return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", isFileAllowedMessage)
+		}
+
+		countFiles++
+	}
+
+	// check if image update available. 
+	// if available, limit to only 4 files
+	if len(files) != 0 {
+		if countFiles != 4 {
+			return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "please input four images only")
+		}
+		
+		imageURLs, err = helper.CloudinaryUploadOfficeImgs(ctx, files)
+		
+		if err != nil {
+			return ctrl.NewInfoResponse(c, http.StatusConflict, "failed", "conflict when upload file in cloud image")
+		}
+		inputTemp.Images = imageURLs
+	}
+	
+	input := request.Office{
+		Title: inputTemp.Title,
+		Description: inputTemp.Description,
+		OfficeType: inputTemp.OfficeType,
+		OfficeLength: inputTemp.OfficeLength,
+		PricePerHour: inputTemp.PricePerHour,
+		OpenHour: openHourTemp,
+		CloseHour: closeHourTemp,
+		Lat: inputTemp.Lat,
+		Lng: inputTemp.Lng,
+		Accommodate: inputTemp.Accommodate,
+		WorkingDesk: inputTemp.WorkingDesk,
+		MeetingRoom: inputTemp.MeetingRoom,
+		PrivateRoom: inputTemp.PrivateRoom,
+		City: inputTemp.City,
+		District: inputTemp.District,
+		Address: inputTemp.Address,
+		Images: inputTemp.Images,
+	}
+
+	err = input.Validate()
 
 	if err != nil {
 		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", "")

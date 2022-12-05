@@ -28,6 +28,7 @@ type Domain struct {
 	District     string
 	Address      string
 	Rate         float64
+	Images       []string
 }
 
 type Usecase interface {

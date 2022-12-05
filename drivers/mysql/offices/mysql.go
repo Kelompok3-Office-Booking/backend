@@ -2,13 +2,20 @@ package offices
 
 import (
 	"backend/businesses/offices"
+	"fmt"
 	"strconv"
+	"strings"
 
 	"gorm.io/gorm"
 )
 
 type officeRepository struct {
 	conn *gorm.DB
+}
+
+type imgsInterface struct {
+	Id string
+	Images string
 }
 
 func NewMySQLRepository(conn *gorm.DB) offices.Repository {
@@ -21,10 +28,22 @@ func (or *officeRepository) GetAll() []offices.Domain {
 	var rec []Office
 
 	or.conn.Find(&rec)
+	
+	var imgsUrlPerID []imgsInterface
+
+	or.conn.Raw("SELECT `offices`.`id`, GROUP_CONCAT( office_images.url ORDER BY office_images.id SEPARATOR ' , ') AS images FROM offices INNER JOIN office_images on offices.id = office_images.office_id GROUP BY offices.id").Scan(&imgsUrlPerID)
 
 	officeDomain := []offices.Domain{}
-
+	
 	for _, office := range rec {
+		for _, v := range imgsUrlPerID {
+			if strconv.Itoa(int(office.ID)) == v.Id {
+				url := v.Images
+				img := strings.Split(url, " , ")
+				office.Images = img
+			}
+		}
+
 		officeDomain = append(officeDomain, office.ToDomain())
 	}
 
@@ -35,6 +54,16 @@ func (or *officeRepository) GetByID(id string) offices.Domain {
 	var office Office
 
 	or.conn.First(&office, "id = ?", id)
+	
+	var imagesString string
+	
+	// get office images
+	querySQL := fmt.Sprintf("SELECT GROUP_CONCAT(office_images.url ORDER BY office_images.id SEPARATOR ' , ') AS images FROM offices INNER JOIN office_images on offices.id = office_images.office_id WHERE `offices`.`id` = %s GROUP BY offices.id", id)
+
+	or.conn.Raw(querySQL).Scan(&imagesString)
+
+	img := strings.Split(imagesString, " , ")
+	office.Images = img
 
 	return office.ToDomain()
 }
@@ -45,6 +74,12 @@ func (or *officeRepository) Create(officeDomain *offices.Domain) offices.Domain 
 	result := or.conn.Create(&rec)
 
 	result.Last(&rec)
+
+	// insert to pivot table `office_images`
+	for _, v := range rec.Images {
+		querySQL := fmt.Sprintf("INSERT INTO `office_images`(`url`, `office_id`) VALUES ('%s', '%s')", v, strconv.Itoa(int(rec.ID)))
+		or.conn.Table("office_images").Exec(querySQL)
+	}
 
 	return rec.ToDomain()
 }
@@ -74,18 +109,37 @@ func (or *officeRepository) Update(id string, officeDomain *offices.Domain) offi
 
 	or.conn.Save(&updatedOffice)
 
+	if len(officeDomain.Images) != 0 {
+		queryDeleteImgs := fmt.Sprintf("DELETE FROM `office_images` WHERE `office_id` = %s", id)
+
+		or.conn.Table("office_images").Exec(queryDeleteImgs)
+	
+		// insert to pivot table `office_images`
+		for _, v := range officeDomain.Images {
+			querySQL := fmt.Sprintf("INSERT INTO `office_images`(`url`, `office_id`) VALUES ('%s', '%s')", v, id)
+			or.conn.Table("office_images").Exec(querySQL)
+		}
+	}
+
 	return updatedOffice.ToDomain()
 }
 
 func (or *officeRepository) Delete(id string) bool {
 	var office offices.Domain = or.GetByID(id)
 
-	deletedOffice := FromDomain(&office)
+	queryDeleteImgs := fmt.Sprintf("DELETE FROM `office_images` WHERE `office_id` = %s", id)
 
-	result := or.conn.Delete(&deletedOffice)
+	resultDeletedImgs := or.conn.Table("office_images").Raw(queryDeleteImgs)
 
-	if result.RowsAffected == 0 {
+	if resultDeletedImgs.RowsAffected == 0 {
 		return false
+	} else {
+		deletedOffice := FromDomain(&office)
+		resultDeleteOffice := or.conn.Delete(&deletedOffice)
+		
+		if resultDeleteOffice.RowsAffected == 0 {
+			return false
+		} 
 	}
 
 	return true

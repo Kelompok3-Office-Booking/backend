@@ -8,8 +8,8 @@ import (
 type OfficeImage struct {
 	ID       uint   `json:"id" gorm:"primaryKey"`
 	URL      string `json:"url"`
-	Office   offices.Office `json:"office"`
 	OfficeID uint   `json:"office_id"`
+	Office   offices.Office `json:"office" gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }
 
 func FromDomain(domain *officeImageUseCase.Domain) *OfficeImage{
