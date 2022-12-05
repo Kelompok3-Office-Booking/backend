@@ -8,8 +8,10 @@ type Domain struct {
 
 type Usecase interface {
 	GetByOfficeID(id string) []Domain
+	Create(officeImgDomain *Domain) Domain
 }
 
 type Repository interface {
 	GetByOfficeID(id string) []Domain
+	Create(officeImgDomain *Domain) Domain
 }

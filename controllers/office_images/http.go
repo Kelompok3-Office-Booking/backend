@@ -3,6 +3,7 @@ package officeimages
 import (
 	officeimages "backend/businesses/office_images"
 	ctrl "backend/controllers"
+	"backend/controllers/office_images/request"
 	"backend/controllers/office_images/response"
 	"net/http"
 
@@ -31,4 +32,26 @@ func (oc *OfficeImageController) GetByOfficeID(c echo.Context) error {
 	}
 
 	return ctrl.NewResponse(c, http.StatusOK, "success", "get all office images by office_id", officeImages)
+}
+
+func (oc *OfficeImageController) Create(c echo.Context) error {
+	input := request.OfficeImage{}
+
+	if err := c.Bind(&input); err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "validation failed")
+	}
+
+	err := input.Validate()
+
+	if err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "validation failed")
+	}
+
+	imgUrls := oc.officeImageUsecase.Create(input.ToDomain())
+
+	if imgUrls.ID == 0 {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "create failed")
+	}
+
+	return ctrl.NewResponse(c, http.StatusCreated, "success", "office image url created", response.FromDomain(imgUrls))
 }
