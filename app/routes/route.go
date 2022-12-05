@@ -40,6 +40,7 @@ func (cl *ControllerList) RouteRegister(e *echo.Echo) {
 	offices.GET("/city/:city", cl.OfficeController.SearchByCity).Name = "group-office-by-city"
 	offices.GET("/rate/:rate", cl.OfficeController.SearchByRate).Name = "group-office-by-rate"
 	offices.GET("/title", cl.OfficeController.SearchByTitle).Name = "search-office-by-title"
+	offices.POST("/office-images", cl.OfficeImageController.Create).Name = "create-office-image-list"
 
 	auth := e.Group("/api/v1", middleware.JWTWithConfig(cl.JWTMiddleware))
 	auth.POST("/logout", cl.AuthController.Logout).Name = "user-logout"

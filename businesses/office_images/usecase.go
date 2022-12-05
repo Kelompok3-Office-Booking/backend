@@ -13,3 +13,7 @@ func NewOfficeImageUsecase(r Repository) Usecase {
 func (uc *OfficeImageUsecase) GetByOfficeID(id string) []Domain {
 	return uc.officeImageRepository.GetByOfficeID(id)
 }
+
+func (uc *OfficeImageUsecase) Create(officeImgDomain *Domain) Domain {
+	return uc.officeImageRepository.Create(officeImgDomain)
+}

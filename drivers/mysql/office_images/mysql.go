@@ -29,3 +29,13 @@ func (r *officeImageRepository) GetByOfficeID(officeID string) []officeimages.Do
 
 	return officeImageDomain
 }
+
+func (r *officeImageRepository) Create(officeImageDomain *officeimages.Domain) officeimages.Domain {
+	rec := FromDomain(officeImageDomain)
+
+	result := r.conn.Preload("offices").Create(&rec)
+
+	result.Last(&rec)
+
+	return rec.ToDomain()
+}
