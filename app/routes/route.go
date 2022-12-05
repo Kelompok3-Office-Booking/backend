@@ -1,20 +1,22 @@
 package routes
 
 import (
+	"backend/controllers/facilities"
+	officeimage "backend/controllers/office_images"
 	"backend/controllers/offices"
 	"backend/controllers/users"
-	officeimage "backend/controllers/office_images"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
 type ControllerList struct {
-	LoggerMiddleware echo.MiddlewareFunc
-	JWTMiddleware    middleware.JWTConfig
-	AuthController   users.AuthController
-	OfficeController offices.OfficeController
+	LoggerMiddleware      echo.MiddlewareFunc
+	JWTMiddleware         middleware.JWTConfig
+	AuthController        users.AuthController
+	OfficeController      offices.OfficeController
 	OfficeImageController officeimage.OfficeImageController
+	FacilityController    facilities.FacilityController
 }
 
 func (cl *ControllerList) RouteRegister(e *echo.Echo) {
@@ -40,6 +42,14 @@ func (cl *ControllerList) RouteRegister(e *echo.Echo) {
 	offices.GET("/city/:city", cl.OfficeController.SearchByCity).Name = "group-office-by-city"
 	offices.GET("/rate/:rate", cl.OfficeController.SearchByRate).Name = "group-office-by-rate"
 	offices.GET("/title", cl.OfficeController.SearchByTitle).Name = "search-office-by-title"
+
+	facilities := e.Group("/api/v1/facilities", middleware.JWTWithConfig(cl.JWTMiddleware))
+
+	facilities.GET("", cl.FacilityController.GetAll).Name = "get-all-facility"
+	facilities.GET("/:id", cl.FacilityController.GetByID).Name = "get-facility-by-id"
+	facilities.POST("", cl.FacilityController.Create).Name = "create-facility"
+	facilities.PUT("/:id", cl.FacilityController.Update).Name = "update-facility"
+	facilities.DELETE("/:id", cl.FacilityController.Delete).Name = "delete-facility"
 
 	auth := e.Group("/api/v1", middleware.JWTWithConfig(cl.JWTMiddleware))
 	auth.POST("/logout", cl.AuthController.Logout).Name = "user-logout"
