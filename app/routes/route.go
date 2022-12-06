@@ -14,6 +14,11 @@ type ControllerList struct {
 }
 
 func (cl *ControllerList) RouteRegister(e *echo.Echo) {
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+	}))
+	
 	e.Use(cl.LoggerMiddleware)
 
 	e.GET("/", cl.AuthController.HelloMessage)
@@ -21,7 +26,8 @@ func (cl *ControllerList) RouteRegister(e *echo.Echo) {
 	v1 := e.Group("/api/v1")
   
 	// endpoint login, register, access refresh token
-	v1.POST("/register", cl.AuthController.Register)
+	v1.GET("", cl.AuthController.HelloMessage)
+  v1.POST("/register", cl.AuthController.Register)
 	v1.POST("/login", cl.AuthController.Login)
 	v1.POST("/refresh", cl.AuthController.Token, middleware.JWTWithConfig(cl.JWTMiddleware))
 	v1.POST("/logout", cl.AuthController.Logout, middleware.JWTWithConfig(cl.JWTMiddleware)).Name = "user-logout"

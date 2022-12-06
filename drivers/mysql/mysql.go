@@ -3,10 +3,11 @@ package mysql_driver
 import (
 	"fmt"
 	"log"
+	
+	_utils "backend/utils"
 
 	"backend/drivers/mysql/users"
 
-	_utils "backend/utils"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
