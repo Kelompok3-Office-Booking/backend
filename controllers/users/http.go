@@ -84,7 +84,7 @@ func (ac *AuthController) Login(c echo.Context) error {
 	token := ac.authUsecase.Login(userInput.ToDomainLogin())
 
 	if token["access_token"] == "" {
-		return ctrl.NewInfoResponse(c, http.StatusUnauthorized, "failed", "invalid email or password")
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "invalid email or password")
 	}
 
 	return c.JSON(http.StatusOK, map[string]any{
