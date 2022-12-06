@@ -262,7 +262,6 @@ func (ac *AuthController) UpdateProfilePhoto(c echo.Context) error {
 		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "bind failed")
 	}
 
-	ctx := context.Background()
 
 	defer src.Close()
 
