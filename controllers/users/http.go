@@ -216,8 +216,6 @@ func (ac *AuthController) UpdateProfilePhoto(c echo.Context) error {
 	var url string
 	var err error
 
-	ctx := context.Background()
-
 	isListed := middlewares.CheckToken(token.Raw)
 
 	if !isListed {
@@ -263,6 +261,8 @@ func (ac *AuthController) UpdateProfilePhoto(c echo.Context) error {
 	if err != nil {
 		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "bind failed")
 	}
+
+	ctx := context.Background()
 
 	defer src.Close()
 
