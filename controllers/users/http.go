@@ -263,7 +263,7 @@ func (ac *AuthController) UpdateProfilePhoto(c echo.Context) error {
 	}
 
 	defer src.Close()
-
+  
 	ctx := context.Background()
 
 	if role == "user" {
