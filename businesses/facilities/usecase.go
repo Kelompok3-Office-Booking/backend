@@ -1,5 +1,7 @@
 package facilities
 
+import "github.com/gosimple/slug"
+
 type FacilityUsecase struct {
 	facilityRepository Repository
 }
@@ -19,6 +21,9 @@ func (fu *FacilityUsecase) GetByID(id string) Domain {
 }
 
 func (fu *FacilityUsecase) Create(facilityDomain *Domain) Domain {
+	slug := slug.Make(facilityDomain.Description)
+	facilityDomain.Slug = slug
+
 	return fu.facilityRepository.Create(facilityDomain)
 }
 

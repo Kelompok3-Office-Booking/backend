@@ -3,6 +3,7 @@ package facilities
 type Domain struct {
 	ID          uint
 	Description string
+	Slug		string
 }
 
 type Usecase interface {
