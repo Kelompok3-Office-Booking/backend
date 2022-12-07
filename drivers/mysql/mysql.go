@@ -8,6 +8,7 @@ import (
 	officeFacilities "backend/drivers/mysql/office_facilities"
 	officeImages "backend/drivers/mysql/office_images"
 	"backend/drivers/mysql/offices"
+	transactions "backend/drivers/mysql/transactions"
 	"backend/drivers/mysql/users"
 
 	_utils "backend/utils"
@@ -49,7 +50,7 @@ func (config *ConfigDB) InitDB() *gorm.DB {
 }
 
 func DBMigrate(db *gorm.DB) {
-	db.AutoMigrate(&users.User{}, &offices.Office{}, officeImages.OfficeImage{}, facilities.Facility{}, officeFacilities.OfficeFacility{})
+	db.AutoMigrate(&users.User{}, &offices.Office{}, officeImages.OfficeImage{}, facilities.Facility{}, officeFacilities.OfficeFacility{}, transactions.Transaction{})
 }
 
 func CloseDB(db *gorm.DB) error {

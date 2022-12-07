@@ -24,6 +24,9 @@ import (
 	_officeFacilityUseCase "backend/businesses/office_facilities"
 	_officeFacilityController "backend/controllers/office_facilities"
 
+	_transactionUseCase "backend/businesses/transactions"
+	_transactionController "backend/controllers/transactions"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -73,6 +76,10 @@ func main() {
 	officeFacilityUseCase := _officeFacilityUseCase.NewOfficeFacilityUsecase(officeFacilityRepo)
 	officeFacilityCtrl := _officeFacilityController.NewOfficeFacilityController(officeFacilityUseCase)
 
+	TransactionRepo := _driverFactory.NewTransactionRepository(db)
+	TransactionUseCase := _transactionUseCase.NewTransactionUsecase(TransactionRepo)
+	TransactionCtrl := _transactionController.NewTransactionController(TransactionUseCase)
+
 	routesInit := _routes.ControllerList{
 		LoggerMiddleware:         configLogger.Init(),
 		JWTMiddleware:            configJWT.Init(),
@@ -81,6 +88,7 @@ func main() {
 		OfficeImageController:    *officeImageCtrl,
 		FacilityController:       *facilityCtrl,
 		OfficeFacilityController: *officeFacilityCtrl,
+		TransactionController:    *TransactionCtrl,
 	}
 
 	routesInit.RouteRegister(app)
