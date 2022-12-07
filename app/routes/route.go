@@ -2,6 +2,7 @@ package routes
 
 import (
 	"backend/controllers/facilities"
+	officefacilities "backend/controllers/office_facilities"
 	officeimage "backend/controllers/office_images"
 	"backend/controllers/offices"
 	"backend/controllers/users"
@@ -11,12 +12,13 @@ import (
 )
 
 type ControllerList struct {
-	LoggerMiddleware      echo.MiddlewareFunc
-	JWTMiddleware         middleware.JWTConfig
-	AuthController        users.AuthController
-	OfficeController      offices.OfficeController
-	OfficeImageController officeimage.OfficeImageController
-	FacilityController    facilities.FacilityController
+	LoggerMiddleware         echo.MiddlewareFunc
+	JWTMiddleware            middleware.JWTConfig
+	AuthController           users.AuthController
+	OfficeController         offices.OfficeController
+	OfficeImageController    officeimage.OfficeImageController
+	FacilityController       facilities.FacilityController
+	OfficeFacilityController officefacilities.OfficeFacilityController
 }
 
 func (cl *ControllerList) RouteRegister(e *echo.Echo) {
@@ -43,6 +45,9 @@ func (cl *ControllerList) RouteRegister(e *echo.Echo) {
 	offices.GET("/rate/:rate", cl.OfficeController.SearchByRate).Name = "group-office-by-rate"
 	offices.GET("/title", cl.OfficeController.SearchByTitle).Name = "search-office-by-title"
 	offices.POST("/office-images", cl.OfficeImageController.Create).Name = "create-office-image-list"
+	offices.GET("/office-facilities", cl.OfficeFacilityController.GetAll).Name = "get-all-office-facility"
+	offices.GET("/:id", cl.OfficeFacilityController.GetByOfficeID).Name = "get-office-facility-by-id"
+	offices.POST("/office-facilities", cl.OfficeFacilityController.Create).Name = "create-office-facility-list"
 
 	facilities := e.Group("/api/v1/facilities", middleware.JWTWithConfig(cl.JWTMiddleware))
 

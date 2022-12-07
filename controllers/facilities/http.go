@@ -22,8 +22,8 @@ func NewFacilityController(facilityUC facilities.Usecase) *FacilityController {
 	}
 }
 
-func (fc *FacilityController) GetAll(c echo.Context) error {
-	facilitiesData := fc.facilityUsecase.GetAll()
+func (oc *FacilityController) GetAll(c echo.Context) error {
+	facilitiesData := oc.facilityUsecase.GetAll()
 
 	facilities := []response.Facility{}
 
@@ -34,10 +34,10 @@ func (fc *FacilityController) GetAll(c echo.Context) error {
 	return ctrl.NewResponse(c, http.StatusOK, "success", "all facilities", facilities)
 }
 
-func (fc *FacilityController) GetByID(c echo.Context) error {
+func (oc *FacilityController) GetByID(c echo.Context) error {
 	var id string = c.Param("id")
 
-	facility := fc.facilityUsecase.GetByID(id)
+	facility := oc.facilityUsecase.GetByID(id)
 
 	if facility.ID == 0 {
 		return ctrl.NewResponse(c, http.StatusNotFound, "failed", "facility not found", "")
@@ -46,7 +46,7 @@ func (fc *FacilityController) GetByID(c echo.Context) error {
 	return ctrl.NewResponse(c, http.StatusOK, "success", "facility found", response.FromDomain(facility))
 }
 
-func (fc *FacilityController) Create(c echo.Context) error {
+func (oc *FacilityController) Create(c echo.Context) error {
 	inputTemp := request.Facility{}
 
 	if err := c.Bind(&inputTemp); err != nil {
@@ -63,12 +63,12 @@ func (fc *FacilityController) Create(c echo.Context) error {
 		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", "")
 	}
 
-	facility := fc.facilityUsecase.Create(input.ToDomain())
+	facility := oc.facilityUsecase.Create(input.ToDomain())
 
 	return ctrl.NewResponse(c, http.StatusCreated, "success", "facility created", response.FromDomain(facility))
 }
 
-func (fc *FacilityController) Update(c echo.Context) error {
+func (oc *FacilityController) Update(c echo.Context) error {
 	input := request.Facility{}
 
 	if err := c.Bind(&input); err != nil {
@@ -83,7 +83,7 @@ func (fc *FacilityController) Update(c echo.Context) error {
 		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", "")
 	}
 
-	facility := fc.facilityUsecase.Update(facilityId, input.ToDomain())
+	facility := oc.facilityUsecase.Update(facilityId, input.ToDomain())
 
 	if facility.ID == 0 {
 		return ctrl.NewResponse(c, http.StatusNotFound, "failed", "facility not found", "")
@@ -92,10 +92,10 @@ func (fc *FacilityController) Update(c echo.Context) error {
 	return ctrl.NewResponse(c, http.StatusOK, "success", "facility updated", response.FromDomain(facility))
 }
 
-func (fc *FacilityController) Delete(c echo.Context) error {
+func (oc *FacilityController) Delete(c echo.Context) error {
 	var facilityId string = c.Param("id")
 
-	isSuccess := fc.facilityUsecase.Delete(facilityId)
+	isSuccess := oc.facilityUsecase.Delete(facilityId)
 
 	if !isSuccess {
 		return ctrl.NewResponse(c, http.StatusNotFound, "failed", "facility not found", "")

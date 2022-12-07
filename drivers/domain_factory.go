@@ -2,11 +2,13 @@ package drivers
 
 import (
 	facilityDomain "backend/businesses/facilities"
+	officeFacilityDomain "backend/businesses/office_facilities"
 	officeImageDomain "backend/businesses/office_images"
 	officeDomain "backend/businesses/offices"
 	userDomain "backend/businesses/users"
 
 	facilityDB "backend/drivers/mysql/facilities"
+	officeFacilityDB "backend/drivers/mysql/office_facilities"
 	officeImageDB "backend/drivers/mysql/office_images"
 	officeDB "backend/drivers/mysql/offices"
 	userDB "backend/drivers/mysql/users"
@@ -28,4 +30,8 @@ func NewOfficeImageRepository(conn *gorm.DB) officeImageDomain.Repository {
 
 func NewFacilityRepository(conn *gorm.DB) facilityDomain.Repository {
 	return facilityDB.NewMySQLRepository(conn)
+}
+
+func NewOfficeFacilityRepository(conn *gorm.DB) officeFacilityDomain.Repository {
+	return officeFacilityDB.NewMySQLRepository(conn)
 }

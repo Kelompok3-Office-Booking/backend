@@ -21,6 +21,9 @@ import (
 	_facilityUseCase "backend/businesses/facilities"
 	_facilityController "backend/controllers/facilities"
 
+	_officeFacilityUseCase "backend/businesses/office_facilities"
+	_officeFacilityController "backend/controllers/office_facilities"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -66,13 +69,18 @@ func main() {
 	facilityUseCase := _facilityUseCase.NewFacilityUsecase(facilityRepo)
 	facilityCtrl := _facilityController.NewFacilityController(facilityUseCase)
 
+	officeFacilityRepo := _driverFactory.NewOfficeFacilityRepository(db)
+	officeFacilityUseCase := _officeFacilityUseCase.NewOfficeFacilityUsecase(officeFacilityRepo)
+	officeFacilityCtrl := _officeFacilityController.NewOfficeFacilityController(officeFacilityUseCase)
+
 	routesInit := _routes.ControllerList{
-		LoggerMiddleware:      configLogger.Init(),
-		JWTMiddleware:         configJWT.Init(),
-		AuthController:        *userCtrl,
-		OfficeController:      *officeCtrl,
-		OfficeImageController: *officeImageCtrl,
-		FacilityController:    *facilityCtrl,
+		LoggerMiddleware:         configLogger.Init(),
+		JWTMiddleware:            configJWT.Init(),
+		AuthController:           *userCtrl,
+		OfficeController:         *officeCtrl,
+		OfficeImageController:    *officeImageCtrl,
+		FacilityController:       *facilityCtrl,
+		OfficeFacilityController: *officeFacilityCtrl,
 	}
 
 	routesInit.RouteRegister(app)
