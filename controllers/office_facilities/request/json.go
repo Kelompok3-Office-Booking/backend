@@ -7,7 +7,7 @@ import (
 )
 
 type OfficeFacility struct {
-	FacilitiesID string `json:"facilities_id" form:"facilities_id" validate:"required"`
+	FacilitiesID uint `json:"facilities_id" form:"facilities_id" validate:"required"`
 	OfficeID     uint   `json:"office_id" form:"office_id" validate:"required"`
 }
 

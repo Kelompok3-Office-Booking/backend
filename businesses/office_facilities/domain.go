@@ -2,7 +2,7 @@ package officefacilities
 
 type Domain struct {
 	ID           uint
-	FacilitiesID string
+	FacilitiesID uint
 	OfficeID     uint
 }
 

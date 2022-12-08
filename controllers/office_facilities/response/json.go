@@ -4,7 +4,7 @@ import officefacilities "backend/businesses/office_facilities"
 
 type OfficeFacility struct {
 	ID           uint   `json:"id" form:"id"`
-	FacilitiesID string `json:"facilities_id" form:"facilities_id"`
+	FacilitiesID uint `json:"facilities_id" form:"facilities_id"`
 	OfficeID     uint   `json:"office_id" form:"office_id"`
 }
 
