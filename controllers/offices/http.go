@@ -3,7 +3,7 @@ package offices
 import (
 	"backend/businesses/offices"
 	"backend/helper"
-	"context"
+	"backend/utils"
 	"fmt"
 	"strconv"
 
@@ -51,68 +51,67 @@ func (oc *OfficeController) GetByID(c echo.Context) error {
 }
 
 func (oc *OfficeController) Create(c echo.Context) error {
-	ctx := context.Background()
 	var imageURLs []string
-	var countFiles int
-	inputTemp := request.OfficeTemp{}
+	
+	input := request.Office{}
 
-	if err := c.Bind(&inputTemp); err != nil {
+	if err := c.Bind(&input); err != nil {
 		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "bind failed", "")
 	}
 
-	openHourTemp, closeHourTemp := helper.ConvertShiftClockToShiftTime(inputTemp.OpenHour, inputTemp.CloseHour)
+	hourDTO := request.HourDTO{}
+
+	if err := c.Bind(&hourDTO); err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "bind failed")
+	}
+
+	facilityIdDTO := request.FacilitiesIdDTO{}
+
+	if err := c.Bind(&facilityIdDTO); err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "bind failed")
+	}
+
+	facilityIdList := utils.StringToList(facilityIdDTO.Id)
+
+	if err := utils.IsIdListStringAllowed(facilityIdDTO.Id); !err {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "input only number on facilities_id, <<id,id,...,id>> is the correct format")
+	}
+
+	if isOpenTimeStringValid := utils.IsValidTime(hourDTO.OpenHour); !isOpenTimeStringValid {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "incorrect open_hour format, 'HH:MM' is the correct format")
+	}
+
+	if isCloseTimeStringValid := utils.IsValidTime(hourDTO.CloseHour); !isCloseTimeStringValid {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "incorrect close_hour format, 'HH:MM' is the correct format")
+	}
 
 	// multipart form
 	form, err := c.MultipartForm()
 	
 	if err != nil {
-		return err
+		return ctrl.NewInfoResponse(c, http.StatusInternalServerError, "failed", "error when reading files")
 	}
 	
 	files := form.File["images"]
+
+	isfilesAllowed, filesCheckMsg := helper.IsFilesAllowed(files)
 	
-	for _, file := range files {
-		isFileAllowed, isFileAllowedMessage := helper.IsFileAllowed(file)
-
-		if !isFileAllowed {
-			return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", isFileAllowedMessage)
-		}
-
-		countFiles++
-	}
-
-	// limit to only 4 files
-	if countFiles != 4 {
-		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "please input four images only")
+	if !isfilesAllowed {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", filesCheckMsg)
 	}
 	
-	imageURLs, err = helper.CloudinaryUploadOfficeImgs(ctx, files)
+	imageURLs, err = helper.CloudinaryUploadOfficeImgs(files, input.Title)
 
 	if err != nil {
 		return ctrl.NewInfoResponse(c, http.StatusConflict, "failed", "conflict when upload file in cloud image")
 	}
 
-	inputTemp.Images = imageURLs
+	openHour, closeHour := utils.ConvertShiftClockToShiftTime(hourDTO.OpenHour, hourDTO.CloseHour)
 
-	input := request.Office{
-		Title: inputTemp.Title,
-		Description: inputTemp.Description,
-		OfficeType: inputTemp.OfficeType,
-		OfficeLength: inputTemp.OfficeLength,
-		PricePerHour: inputTemp.PricePerHour,
-		OpenHour: openHourTemp,
-		CloseHour: closeHourTemp,
-		Lat: inputTemp.Lat,
-		Lng: inputTemp.Lng,
-		Accommodate: inputTemp.Accommodate,
-		WorkingDesk: inputTemp.WorkingDesk,
-		MeetingRoom: inputTemp.MeetingRoom,
-		PrivateRoom: inputTemp.PrivateRoom,
-		City: inputTemp.City,
-		District: inputTemp.District,
-		Address: inputTemp.Address,
-		Images: inputTemp.Images,
-	}
+	input.Images = imageURLs
+	input.OpenHour = openHour
+	input.CloseHour = closeHour
+	input.FacilitiesId = facilityIdList
 
 	err = input.Validate()
 
@@ -123,7 +122,7 @@ func (oc *OfficeController) Create(c echo.Context) error {
 	office := oc.officeUsecase.Create(input.ToDomain())
 
 	if office.ID == 0 {
-		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "error when creating office")
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "error when creating office, facilities ID did not exist")
 	}
 	
 	getOffice := oc.officeUsecase.GetByID(strconv.Itoa(int(office.ID)))
@@ -133,95 +132,86 @@ func (oc *OfficeController) Create(c echo.Context) error {
 
 func (oc *OfficeController) Update(c echo.Context) error {
 	var officeId string = c.Param("id")
-	ctx := context.Background()
-	inputTemp := request.OfficeTemp{}
 	var imageURLs []string
+
+	input := request.Office{}
 
 	getOffice := oc.officeUsecase.GetByID(officeId)
 
 	if getOffice.ID == 0 {
-		return ctrl.NewResponse(c, http.StatusNotFound, "failed", "office not found", "")
+		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "office not found")
 	}
 
-	if err := c.Bind(&inputTemp); err != nil {
-		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", "")
+	hourDTO := request.HourDTO{}
+
+	if err := c.Bind(&hourDTO); err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "bind failed")
 	}
 
-	openHourTemp, closeHourTemp := helper.ConvertShiftClockToShiftTime(inputTemp.OpenHour, inputTemp.CloseHour)
+	facilityIdDTO := request.FacilitiesIdDTO{}
+
+	if err := c.Bind(&facilityIdDTO); err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "bind failed")
+	}
+
+	if err := utils.IsIdListStringAllowed(facilityIdDTO.Id); !err {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "input only number on facilities_id, <<id,id,...,id>> is the correct format")
+	}
+
+	if isOpenTimeStringValid := utils.IsValidTime(hourDTO.OpenHour); !isOpenTimeStringValid {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "incorrect open_hour format, 'HH:MM' is the correct format")
+	}
+
+	if isCloseTimeStringValid := utils.IsValidTime(hourDTO.CloseHour); !isCloseTimeStringValid {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "incorrect close_hour format, 'HH:MM' is the correct format")
+	}
 
 	// multipart form
 	form, err := c.MultipartForm()
 	
 	if err != nil {
-		return err
+		return ctrl.NewInfoResponse(c, http.StatusInternalServerError, "failed", "error when reading files")
 	}
 	
 	files := form.File["images"]
 
-	var countFiles int
+	isfilesAllowed, filesCheckMsg := helper.IsFilesAllowed(files)
 	
-	for _, file := range files {
-		isFileAllowed, isFileAllowedMessage := helper.IsFileAllowed(file)
-
-		if !isFileAllowed {
-			return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", isFileAllowedMessage)
-		}
-
-		countFiles++
-	}
-
-	// check if image update available. 
-	// if available, limit to only 4 files
-	if len(files) != 0 {
-		if countFiles != 4 {
-			return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "please input four images only")
-		}
-		
-		imageURLs, err = helper.CloudinaryUploadOfficeImgs(ctx, files)
-		
-		if err != nil {
-			return ctrl.NewInfoResponse(c, http.StatusConflict, "failed", "conflict when upload file in cloud image")
-		}
-		inputTemp.Images = imageURLs
+	if !isfilesAllowed {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", filesCheckMsg)
 	}
 	
-	input := request.Office{
-		Title: inputTemp.Title,
-		Description: inputTemp.Description,
-		OfficeType: inputTemp.OfficeType,
-		OfficeLength: inputTemp.OfficeLength,
-		PricePerHour: inputTemp.PricePerHour,
-		OpenHour: openHourTemp,
-		CloseHour: closeHourTemp,
-		Lat: inputTemp.Lat,
-		Lng: inputTemp.Lng,
-		Accommodate: inputTemp.Accommodate,
-		WorkingDesk: inputTemp.WorkingDesk,
-		MeetingRoom: inputTemp.MeetingRoom,
-		PrivateRoom: inputTemp.PrivateRoom,
-		City: inputTemp.City,
-		District: inputTemp.District,
-		Address: inputTemp.Address,
-		Images: inputTemp.Images,
+	imageURLs, err = helper.CloudinaryUploadOfficeImgs(files, input.Title)
+
+	if err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusConflict, "failed", "conflict when upload file in cloud image")
 	}
+
+	openHour, closeHour := utils.ConvertShiftClockToShiftTime(hourDTO.OpenHour, hourDTO.CloseHour)
+
+	input.Images = imageURLs
+	input.OpenHour = openHour
+	input.CloseHour = closeHour
 
 	err = input.Validate()
 
 	if err != nil {
-		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", "")
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "validation failed")
 	}
 
 	office := oc.officeUsecase.Update(officeId, input.ToDomain())
 
 	if office.ID == 0 {
-		return ctrl.NewResponse(c, http.StatusNotFound, "failed", "office not found", "")
+		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "office not found")
 	}
 
 	return ctrl.NewResponse(c, http.StatusOK, "success", "office updated", response.FromDomain(office))
 }
 
 func (oc *OfficeController) Delete(c echo.Context) error {
-	var officeId string = c.Param("id")
+	var officeId string = c.Param("office_id")
+
+	fmt.Println(officeId)
 
 	isSuccess := oc.officeUsecase.Delete(officeId)
 
@@ -271,11 +261,101 @@ func (oc *OfficeController) SearchByRate(c echo.Context) error {
 func (oc *OfficeController) SearchByTitle(c echo.Context) error {
 	var title string = c.QueryParam("search")
 
-	office := oc.officeUsecase.SearchByTitle(title)
+	offices := []response.Office{}
+	
+	officesData := oc.officeUsecase.SearchByTitle(title)
 
-	if office.ID == 0 {
-		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "office not found")
+	for _, office := range officesData {
+		offices = append(offices, response.FromDomain(office))
 	}
 
-	return ctrl.NewResponse(c, http.StatusOK, "success", "office found", response.FromDomain(office))
+	if len(offices) == 0 {
+		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", fmt.Sprintf("city with title = %s not found", title))
+	}
+
+	// if office.ID == 0 {
+	// 	return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "office not found")
+	// }
+
+	return ctrl.NewResponse(c, http.StatusOK, "success", "office found", offices)
+}
+
+func (oc *OfficeController) GetOffices(c echo.Context) error {
+	officesData := oc.officeUsecase.GetOffices()
+
+	offices := []response.Office{}
+
+	for _, office := range officesData {
+		offices = append(offices, response.FromDomain(office))
+	}
+
+	return ctrl.NewResponse(c, http.StatusOK, "success", "all offices type : offices", offices)
+}
+
+func (oc *OfficeController) GetCoworkingSpace(c echo.Context) error {
+	coworkingSpaceData := oc.officeUsecase.GetCoworkingSpace()
+
+	coworkingSpaces := []response.Office{}
+
+	for _, coworkingSpace := range coworkingSpaceData {
+		coworkingSpaces = append(coworkingSpaces, response.FromDomain(coworkingSpace))
+	}
+
+	return ctrl.NewResponse(c, http.StatusOK, "success", "all offices type : coworking space", coworkingSpaces)
+}
+
+func (oc *OfficeController) GetMeetingRooms(c echo.Context) error {
+	meetingRoomsData := oc.officeUsecase.GetMeetingRooms()
+
+	meetingRooms := []response.Office{}
+
+	for _, meetingRoom := range meetingRoomsData {
+		meetingRooms = append(meetingRooms, response.FromDomain(meetingRoom))
+	}
+
+	return ctrl.NewResponse(c, http.StatusOK, "success", "all offices type : meeting rooms", meetingRooms)
+}
+
+func (oc *OfficeController) GetRecommendation(c echo.Context) error {
+	recommendationsData := oc.officeUsecase.GetRecommendation()
+
+	recommendations := []response.Office{}
+
+	for _, recommendation := range recommendationsData {
+		recommendations = append(recommendations, response.FromDomain(recommendation))
+	}
+
+	return ctrl.NewResponse(c, http.StatusOK, "success", "all offices type : meeting rooms", recommendations)
+}
+
+func (oc *OfficeController) GetNearest(c echo.Context) error {
+	var err error
+	var lat string = c.QueryParam("lat")
+	var lng string = c.QueryParam("long")
+
+	var geolocation = request.GeoLocationDTO{}
+
+	if geolocation.Lat, err = strconv.ParseFloat(lat, 64); err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "failed when parsing, input the latitude in float number")
+	}
+	
+	if geolocation.Lng, err = strconv.ParseFloat(lng, 64); err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "failed when parsing, input the longitude in float number")
+	}
+
+	err = geolocation.Validation()
+
+	if err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "wrong geolocation format")
+	}
+
+	nearestsData := oc.officeUsecase.GetNearest(lat, lng)
+
+	nearest := []response.Office{}
+
+	for _, n := range nearestsData {
+		nearest = append(nearest, response.FromDomain(n))
+	}
+
+	return ctrl.NewResponse(c, http.StatusOK, "success", fmt.Sprintf("all nearest place: %s,%s", lat, lng), nearest)
 }

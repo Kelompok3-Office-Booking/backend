@@ -2,14 +2,16 @@ package officefacilities
 
 import (
 	officeFacilityUseCase "backend/businesses/office_facilities"
+	"backend/drivers/mysql/facilities"
 	"backend/drivers/mysql/offices"
 )
 
 type OfficeFacility struct {
 	ID           uint           `json:"id" gorm:"primaryKey"`
-	FacilitiesID string         `json:"facilities_id"`
-	OfficeID     uint           `json:"office_id"`
-	Office       offices.Office `json:"office" gorm:""`
+	FacilitiesID uint         `json:"-"`
+	Facility     facilities.Facility `json:"facility,omitempty" gorm:"foreignKey:FacilitiesID;references:ID"`
+	OfficeID     uint           `json:"-"`
+	Office       offices.Office `json:"office" gorm:"foreignKey:OfficeID;references:ID"`
 }
 
 func FromDomain(domain *officeFacilityUseCase.Domain) *OfficeFacility {

@@ -38,6 +38,26 @@ func (ou *OfficeUsecase) SearchByRate(rate string) []Domain {
 	return ou.officeRepository.SearchByRate(rate)
 }
 
-func (ou *OfficeUsecase) SearchByTitle(title string) Domain {
+func (ou *OfficeUsecase) SearchByTitle(title string) []Domain {
 	return ou.officeRepository.SearchByTitle(title)
+}
+
+func (ou *OfficeUsecase) GetCoworkingSpace() []Domain {
+	return ou.officeRepository.GetCoworkingSpace()
+}
+
+func (ou *OfficeUsecase) GetOffices() []Domain {
+	return ou.officeRepository.GetOffices()
+}
+
+func (ou *OfficeUsecase) GetMeetingRooms() []Domain {
+	return ou.officeRepository.GetMeetingRooms()
+}
+
+func (ou *OfficeUsecase) GetRecommendation() []Domain {
+	return ou.officeRepository.GetRecommendation()
+}
+
+func (ou *OfficeUsecase) GetNearest(lat string, long string) []Domain {
+	return ou.officeRepository.GetNearest(lat, long)
 }

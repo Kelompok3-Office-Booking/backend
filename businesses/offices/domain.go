@@ -7,28 +7,32 @@ import (
 )
 
 type Domain struct {
-	ID           uint
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    gorm.DeletedAt
-	Title        string
-	Description  string
-	OfficeType   string
-	OfficeLength uint
-	PricePerHour uint
-	OpenHour     time.Time
-	CloseHour    time.Time
-	Lat          float64
-	Lng          float64
-	Accommodate  uint
-	WorkingDesk  uint
-	MeetingRoom  uint
-	PrivateRoom  uint
-	City         string
-	District     string
-	Address      string
-	Rate         float64
-	Images       []string
+	ID             uint
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	DeletedAt      gorm.DeletedAt
+	Title          string
+	Description    string
+	OfficeType     string
+	OfficeLength   uint
+	Price          uint
+	OpenHour       time.Time
+	CloseHour      time.Time
+	Lat            float64
+	Lng            float64
+	Accommodate    uint
+	WorkingDesk    uint
+	MeetingRoom    uint
+	PrivateRoom    uint
+	City           string
+	District       string
+	Address        string
+	Rate           float64
+	Images         []string
+	FacilitiesId   []string
+	FacilitiesDesc []string
+	FacilitesSlug  []string
+	Distance float64
 }
 
 type Usecase interface {
@@ -39,7 +43,12 @@ type Usecase interface {
 	Delete(id string) bool
 	SearchByCity(city string) []Domain
 	SearchByRate(rate string) []Domain
-	SearchByTitle(title string) Domain
+	SearchByTitle(title string) []Domain
+	GetOffices() []Domain
+	GetCoworkingSpace() []Domain
+	GetMeetingRooms() []Domain
+	GetRecommendation() []Domain
+	GetNearest(lat string, long string) []Domain
 }
 
 type Repository interface {
@@ -50,5 +59,10 @@ type Repository interface {
 	Delete(id string) bool
 	SearchByCity(city string) []Domain
 	SearchByRate(rate string) []Domain
-	SearchByTitle(title string) Domain
+	SearchByTitle(title string) []Domain
+	GetOffices() []Domain
+	GetCoworkingSpace() []Domain
+	GetMeetingRooms() []Domain
+	GetRecommendation() []Domain
+	GetNearest(lat string, long string) []Domain
 }

@@ -35,15 +35,18 @@ func CloudinaryUpload(ctx context.Context, source multipart.File, userId string)
 	return url, err
 }
 
-func CloudinaryUploadOfficeImgs(ctx context.Context, files []*multipart.FileHeader) ([]string, error) {
+func CloudinaryUploadOfficeImgs(files []*multipart.FileHeader, officeName string, ) ([]string, error) {
+	ctx := context.Background()
 	cloudinaryCloud := _util.GetConfig("CLOUDINARY_CLOUD")
 	cloudinaryKey := _util.GetConfig("CLOUDINARY_KEY")
 	cloudinarySecret := _util.GetConfig("CLOUDINARY_SECRET")
 
 	cld, _ := cloudinary.NewFromParams(cloudinaryCloud, cloudinaryKey, cloudinarySecret)
+	
 	var imageURLs []string
 	var err error
-	for _, file := range files {
+
+	for i, file := range files {
 		src, err := file.Open()
 		
 		if err != nil {
@@ -51,7 +54,7 @@ func CloudinaryUploadOfficeImgs(ctx context.Context, files []*multipart.FileHead
 			return imageURLs, err
 		}
 
-		fileName := generateName(10)
+		fileName := fmt.Sprintf("office-%s-gambar-ke-%d", officeName, i)
 		
 		// upload image and set the PublicID to fileName.
 		resp, err := cld.Upload.Upload(
