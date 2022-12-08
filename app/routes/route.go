@@ -5,6 +5,7 @@ import (
 	officefacilities "backend/controllers/office_facilities"
 	officeimage "backend/controllers/office_images"
 	"backend/controllers/offices"
+	transactions "backend/controllers/transactions"
 	"backend/controllers/users"
 
 	"github.com/labstack/echo/v4"
@@ -19,6 +20,7 @@ type ControllerList struct {
 	OfficeImageController    officeimage.OfficeImageController
 	FacilityController       facilities.FacilityController
 	OfficeFacilityController officefacilities.OfficeFacilityController
+	TransactionController    transactions.TransactionController
 }
 
 func (cl *ControllerList) RouteRegister(e *echo.Echo) {
@@ -62,6 +64,11 @@ func (cl *ControllerList) RouteRegister(e *echo.Echo) {
 	facilities.POST("", cl.FacilityController.Create).Name = "create-facility"
 	facilities.PUT("/:id", cl.FacilityController.Update).Name = "update-facility"
 	facilities.DELETE("/:id", cl.FacilityController.Delete).Name = "delete-facility"
+
+	transactions := e.Group("/api/v1/transactions", middleware.JWTWithConfig(cl.JWTMiddleware))
+
+	transactions.GET("", cl.TransactionController.GetAll).Name = "get-all-transaction"
+	transactions.POST("", cl.TransactionController.Create).Name = "create-transaction"
 
 	auth := e.Group("/api/v1", middleware.JWTWithConfig(cl.JWTMiddleware))
 	auth.POST("/logout", cl.AuthController.Logout).Name = "user-logout"

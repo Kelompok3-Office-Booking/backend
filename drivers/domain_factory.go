@@ -5,12 +5,14 @@ import (
 	officeFacilityDomain "backend/businesses/office_facilities"
 	officeImageDomain "backend/businesses/office_images"
 	officeDomain "backend/businesses/offices"
+	transactionDomain "backend/businesses/transactions"
 	userDomain "backend/businesses/users"
 
 	facilityDB "backend/drivers/mysql/facilities"
 	officeFacilityDB "backend/drivers/mysql/office_facilities"
 	officeImageDB "backend/drivers/mysql/office_images"
 	officeDB "backend/drivers/mysql/offices"
+	transactionDB "backend/drivers/mysql/transactions"
 	userDB "backend/drivers/mysql/users"
 
 	"gorm.io/gorm"
@@ -34,4 +36,8 @@ func NewFacilityRepository(conn *gorm.DB) facilityDomain.Repository {
 
 func NewOfficeFacilityRepository(conn *gorm.DB) officeFacilityDomain.Repository {
 	return officeFacilityDB.NewMySQLRepository(conn)
+}
+
+func NewTransactionRepository(conn *gorm.DB) transactionDomain.Repository {
+	return transactionDB.NewMySQLRepository(conn)
 }
