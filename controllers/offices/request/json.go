@@ -2,6 +2,7 @@ package request
 
 import (
 	"backend/businesses/offices"
+	"backend/utils"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -15,8 +16,8 @@ type Office struct {
 	Price        uint   `json:"price" form:"price" validate:"required,numeric"`
 	OpenHour     time.Time
 	CloseHour    time.Time
-	Lat          float64  `json:"lat" form:"lat" validate:"required,latitude"`
-	Lng          float64  `json:"lng" form:"lng" validate:"required,longitude"`
+	Lat          float64  `json:"lat" form:"lat" validate:"required,latitude,min=-90,max=90"`
+	Lng          float64  `json:"lng" form:"lng" validate:"required,longitude,min=-180,max=180"`
 	Accommodate  uint     `json:"accommodate" form:"accommodate" validate:"required,numeric"`
 	WorkingDesk  uint     `json:"working_desk" form:"working_desk" validate:"required,numeric"`
 	MeetingRoom  uint     `json:"meeting_room" form:"meeting_room" validate:"required,numeric"`
@@ -24,9 +25,9 @@ type Office struct {
 	City         string   `json:"city" form:"city" validate:"required,oneof='central jakarta' 'south jakarta' 'west jakarta' 'east jakarta' 'thousand islands'"`
 	District     string   `json:"district" form:"district" validate:"required"`
 	Address      string   `json:"address" form:"address" validate:"required"`
-	Rate         float64  `json:"rate"`
 	Images       []string `json:"images" form:"images"`
 	FacilitiesId []string `json:"facilities_id" validate:"required"`
+	Rate         float64  `json:"rate"`
 }
 
 type HourDTO struct {
@@ -61,9 +62,9 @@ func (req *Office) ToDomain() *offices.Domain {
 		City:         req.City,
 		District:     req.District,
 		Address:      req.Address,
-		Rate:         req.Rate,
 		Images:       req.Images,
 		FacilitiesId: req.FacilitiesId,
+		Rate:         req.Rate,
 	}
 }
 
@@ -75,10 +76,26 @@ func (req *Office) Validate() error {
 	return err
 }
 
-func (req *GeoLocationDTO) Validation() error {
+func (req *GeoLocationDTO) Validate() error {
 	validate := validator.New()
 
 	err := validate.Struct(req)
+
+	return err
+}
+
+func (req *HourDTO) Validate() error {
+	err := utils.IsValidTime(req.OpenHour)
+
+	if err != nil {
+		return err
+	}
+
+	err = utils.IsValidTime(req.CloseHour)
+
+	if err != nil {
+		return err
+	}
 
 	return err
 }

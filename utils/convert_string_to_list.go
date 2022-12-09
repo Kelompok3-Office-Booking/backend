@@ -12,10 +12,15 @@ func StringToList(str string) []string {
 	return commaSeparated
 }
 
-func IsIdListStringAllowed(str string) bool {
+func IsIdListStringAllowed(str string) error {
+	var err error
 	var regex, _ = regexp.Compile(`^\d+(,\d+)*$`)
 
 	var isMatch = regex.MatchString(str)
 	
-	return isMatch
+	if !isMatch {
+		return &stringOfIntSliceError{}
+	}
+
+	return err
 }

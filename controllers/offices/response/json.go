@@ -28,12 +28,12 @@ type Office struct {
 	City           string   `json:"city" form:"city"`
 	District       string   `json:"district" form:"district"`
 	Address        string   `json:"address" form:"address"`
-	Rate           float64  `json:"rate" form:"rate"`
 	Images         []string `json:"images" form:"images"`
 	FacilitiesId   []string `json:"facilities_id" form:"facilities_id"`
 	FacilitiesDesc []string `json:"facilities_desc" form:"facilities_desc"`
 	FacilitesSlug  []string `json:"facilities_slug" form:"facilities_slug"`
 	Distance 	    float64 `json:"distance" form:"distance"`
+	Rate           float64  `json:"rate" form:"rate"`
 }
 
 func FromDomain(domain offices.Domain) Office {
@@ -55,12 +55,12 @@ func FromDomain(domain offices.Domain) Office {
 		City:           cases.Title(language.English).String(domain.City),
 		District:       cases.Title(language.English).String(domain.District),
 		Address:        cases.Title(language.English).String(domain.Address),
-		Rate:           domain.Rate,
 		Images:         domain.Images,
 		FacilitiesId:   domain.FacilitiesId,
 		FacilitiesDesc: domain.FacilitiesDesc,
 		FacilitesSlug:  domain.FacilitesSlug,
 		Distance: 		domain.Distance,
+		Rate:           domain.Rate,
 		CreatedAt:      domain.CreatedAt.Format("02-01-2006 15:04:05"),
 		UpdatedAt:      domain.UpdatedAt.Format("02-01-2006 15:04:05"),
 		DeletedAt:      domain.DeletedAt.Time.Format("01-02-2006 15:04:05"),

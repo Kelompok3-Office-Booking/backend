@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/rand"
 	"mime/multipart"
 
 	"github.com/cloudinary/cloudinary-go/v2"
@@ -35,7 +34,7 @@ func CloudinaryUpload(ctx context.Context, source multipart.File, userId string)
 	return url, err
 }
 
-func CloudinaryUploadOfficeImgs(files []*multipart.FileHeader, officeName string, ) ([]string, error) {
+func CloudinaryUploadOfficeImgs(files []*multipart.FileHeader, officeName string) ([]string, error) {
 	ctx := context.Background()
 	cloudinaryCloud := _util.GetConfig("CLOUDINARY_CLOUD")
 	cloudinaryKey := _util.GetConfig("CLOUDINARY_KEY")
@@ -46,8 +45,8 @@ func CloudinaryUploadOfficeImgs(files []*multipart.FileHeader, officeName string
 	var imageURLs []string
 	var err error
 
-	for i, file := range files {
-		src, err := file.Open()
+	for i := len(files) - 1; i >= 0; i-- {
+		src, err := files[i].Open()
 		
 		if err != nil {
 			log.Println(err)
@@ -55,7 +54,7 @@ func CloudinaryUploadOfficeImgs(files []*multipart.FileHeader, officeName string
 		}
 
 		fileName := fmt.Sprintf("office-%s-gambar-ke-%d", officeName, i)
-		
+
 		// upload image and set the PublicID to fileName.
 		resp, err := cld.Upload.Upload(
 			ctx,
@@ -78,15 +77,6 @@ func CloudinaryUploadOfficeImgs(files []*multipart.FileHeader, officeName string
 
 		defer src.Close()
 	}
-
+	
 	return imageURLs, err
-}
-
-func generateName(n int) string {
-	var chars = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321")
-	str := make([]rune, n)
-	for i := range str {
-		str[i] = chars[rand.Intn(len(chars))]
-	}
-	return string(str)
 }

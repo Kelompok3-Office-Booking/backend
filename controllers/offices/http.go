@@ -52,7 +52,7 @@ func (oc *OfficeController) GetByID(c echo.Context) error {
 
 func (oc *OfficeController) Create(c echo.Context) error {
 	var imageURLs []string
-	
+
 	input := request.Office{}
 
 	if err := c.Bind(&input); err != nil {
@@ -65,6 +65,11 @@ func (oc *OfficeController) Create(c echo.Context) error {
 		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "bind failed")
 	}
 
+	// input hour validation
+	if err := hourDTO.Validate(); err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", fmt.Sprintf("%s", err))
+	}
+
 	facilityIdDTO := request.FacilitiesIdDTO{}
 
 	if err := c.Bind(&facilityIdDTO); err != nil {
@@ -73,33 +78,26 @@ func (oc *OfficeController) Create(c echo.Context) error {
 
 	facilityIdList := utils.StringToList(facilityIdDTO.Id)
 
-	if err := utils.IsIdListStringAllowed(facilityIdDTO.Id); !err {
-		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "input only number on facilities_id, <<id,id,...,id>> is the correct format")
-	}
-
-	if isOpenTimeStringValid := utils.IsValidTime(hourDTO.OpenHour); !isOpenTimeStringValid {
-		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "incorrect open_hour format, 'HH:MM' is the correct format")
-	}
-
-	if isCloseTimeStringValid := utils.IsValidTime(hourDTO.CloseHour); !isCloseTimeStringValid {
-		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "incorrect close_hour format, 'HH:MM' is the correct format")
+	// facilities_id list validation
+	if err := utils.IsIdListStringAllowed(facilityIdDTO.Id); err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", fmt.Sprintf("%s", err))
 	}
 
 	// multipart form
 	form, err := c.MultipartForm()
-	
+
 	if err != nil {
 		return ctrl.NewInfoResponse(c, http.StatusInternalServerError, "failed", "error when reading files")
 	}
-	
+
 	files := form.File["images"]
 
 	isfilesAllowed, filesCheckMsg := helper.IsFilesAllowed(files)
-	
+
 	if !isfilesAllowed {
 		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", filesCheckMsg)
 	}
-	
+
 	imageURLs, err = helper.CloudinaryUploadOfficeImgs(files, input.Title)
 
 	if err != nil {
@@ -124,22 +122,26 @@ func (oc *OfficeController) Create(c echo.Context) error {
 	if office.ID == 0 {
 		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "error when creating office, facilities ID did not exist")
 	}
-	
+
 	getOffice := oc.officeUsecase.GetByID(strconv.Itoa(int(office.ID)))
 
 	return ctrl.NewResponse(c, http.StatusCreated, "success", "office created", response.FromDomain(getOffice))
 }
 
 func (oc *OfficeController) Update(c echo.Context) error {
-	var officeId string = c.Param("id")
+	var officeId string = c.Param("office_id")
 	var imageURLs []string
+
+	checkOfficeExisted := oc.officeUsecase.GetByID(officeId)
+
+	if checkOfficeExisted.ID == 0 {
+		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "office not found")
+	}
 
 	input := request.Office{}
 
-	getOffice := oc.officeUsecase.GetByID(officeId)
-
-	if getOffice.ID == 0 {
-		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "office not found")
+	if err := c.Bind(&input); err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "bind failed")
 	}
 
 	hourDTO := request.HourDTO{}
@@ -148,64 +150,70 @@ func (oc *OfficeController) Update(c echo.Context) error {
 		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "bind failed")
 	}
 
+	// input hour validation
+	if err := hourDTO.Validate(); err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", fmt.Sprintf("%s", err))
+	}
+
 	facilityIdDTO := request.FacilitiesIdDTO{}
 
 	if err := c.Bind(&facilityIdDTO); err != nil {
 		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "bind failed")
 	}
 
-	if err := utils.IsIdListStringAllowed(facilityIdDTO.Id); !err {
-		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "input only number on facilities_id, <<id,id,...,id>> is the correct format")
-	}
+	facilityIdList := utils.StringToList(facilityIdDTO.Id)
 
-	if isOpenTimeStringValid := utils.IsValidTime(hourDTO.OpenHour); !isOpenTimeStringValid {
-		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "incorrect open_hour format, 'HH:MM' is the correct format")
-	}
-
-	if isCloseTimeStringValid := utils.IsValidTime(hourDTO.CloseHour); !isCloseTimeStringValid {
-		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "incorrect close_hour format, 'HH:MM' is the correct format")
+	// facilities_id list validation
+	if err := utils.IsIdListStringAllowed(facilityIdDTO.Id); err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", fmt.Sprintf("wrong input in facilities_id, %s", err))
 	}
 
 	// multipart form
 	form, err := c.MultipartForm()
-	
+
 	if err != nil {
 		return ctrl.NewInfoResponse(c, http.StatusInternalServerError, "failed", "error when reading files")
 	}
-	
+
 	files := form.File["images"]
 
-	isfilesAllowed, filesCheckMsg := helper.IsFilesAllowed(files)
-	
-	if !isfilesAllowed {
-		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", filesCheckMsg)
-	}
-	
-	imageURLs, err = helper.CloudinaryUploadOfficeImgs(files, input.Title)
+	if len(files) > 0 {
+		isfilesAllowed, filesCheckMsg := helper.IsFilesAllowed(files)
 
-	if err != nil {
-		return ctrl.NewInfoResponse(c, http.StatusConflict, "failed", "conflict when upload file in cloud image")
+		if !isfilesAllowed {
+			return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", filesCheckMsg)
+		}
+
+		imageURLs, err = helper.CloudinaryUploadOfficeImgs(files, input.Title)
+
+		if err != nil {
+			return ctrl.NewInfoResponse(c, http.StatusConflict, "failed", "conflict when upload file in cloud image")
+		}
+
+		input.Images = imageURLs
 	}
 
 	openHour, closeHour := utils.ConvertShiftClockToShiftTime(hourDTO.OpenHour, hourDTO.CloseHour)
-
-	input.Images = imageURLs
 	input.OpenHour = openHour
 	input.CloseHour = closeHour
+	input.FacilitiesId = facilityIdList
 
+	err = nil
 	err = input.Validate()
 
 	if err != nil {
-		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "validation failed")
+		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", err)
 	}
 
 	office := oc.officeUsecase.Update(officeId, input.ToDomain())
 
 	if office.ID == 0 {
-		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "office not found")
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "error when updating office, facilities ID did not exist")
 	}
 
-	return ctrl.NewResponse(c, http.StatusOK, "success", "office updated", response.FromDomain(office))
+	getOffice := oc.officeUsecase.GetByID(strconv.Itoa(int(office.ID)))
+
+	return ctrl.NewResponse(c, http.StatusOK, "success", "office updated", response.FromDomain(getOffice))
 }
 
 func (oc *OfficeController) Delete(c echo.Context) error {
@@ -242,9 +250,9 @@ func (oc *OfficeController) SearchByCity(c echo.Context) error {
 
 func (oc *OfficeController) SearchByRate(c echo.Context) error {
 	var rate string = c.Param("rate")
-	
+
 	offices := []response.Office{}
-	
+
 	officesData := oc.officeUsecase.SearchByRate(rate)
 
 	for _, office := range officesData {
@@ -262,7 +270,7 @@ func (oc *OfficeController) SearchByTitle(c echo.Context) error {
 	var title string = c.QueryParam("search")
 
 	offices := []response.Office{}
-	
+
 	officesData := oc.officeUsecase.SearchByTitle(title)
 
 	for _, office := range officesData {
@@ -272,10 +280,6 @@ func (oc *OfficeController) SearchByTitle(c echo.Context) error {
 	if len(offices) == 0 {
 		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", fmt.Sprintf("city with title = %s not found", title))
 	}
-
-	// if office.ID == 0 {
-	// 	return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "office not found")
-	// }
 
 	return ctrl.NewResponse(c, http.StatusOK, "success", "office found", offices)
 }
@@ -333,17 +337,21 @@ func (oc *OfficeController) GetNearest(c echo.Context) error {
 	var lat string = c.QueryParam("lat")
 	var lng string = c.QueryParam("long")
 
+	if err := utils.IsGeolocationStringInputAllowed(lat, lng); err != nil {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", fmt.Sprintf("%s", err))
+	}
+
 	var geolocation = request.GeoLocationDTO{}
 
 	if geolocation.Lat, err = strconv.ParseFloat(lat, 64); err != nil {
 		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "failed when parsing, input the latitude in float number")
 	}
-	
+
 	if geolocation.Lng, err = strconv.ParseFloat(lng, 64); err != nil {
 		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "failed when parsing, input the longitude in float number")
 	}
 
-	err = geolocation.Validation()
+	err = geolocation.Validate()
 
 	if err != nil {
 		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "wrong geolocation format")

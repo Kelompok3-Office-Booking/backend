@@ -27,12 +27,12 @@ type Domain struct {
 	City           string
 	District       string
 	Address        string
-	Rate           float64
 	Images         []string
 	FacilitiesId   []string
 	FacilitiesDesc []string
 	FacilitesSlug  []string
-	Distance float64
+	Distance       float64
+	Rate           float64
 }
 
 type Usecase interface {
