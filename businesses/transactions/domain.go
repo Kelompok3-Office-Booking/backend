@@ -10,9 +10,15 @@ type Domain struct {
 type Usecase interface {
 	GetAll() []Domain
 	Create(transactionDomain *Domain) Domain
+	GetByID(id string) Domain
+	Update(id string, transactionDomain *Domain) Domain
+	Delete(id string) bool
 }
 
 type Repository interface {
 	GetAll() []Domain
 	Create(transactionDomain *Domain) Domain
+	GetByID(id string) Domain
+	Update(id string, transactionDomain *Domain) Domain
+	Delete(id string) bool
 }

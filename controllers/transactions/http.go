@@ -53,3 +53,51 @@ func (t *TransactionController) Create(c echo.Context) error {
 
 	return ctrl.NewResponse(c, http.StatusCreated, "success", "transaction created", response.FromDomain(trans))
 }
+
+func (t *TransactionController) GetByID(c echo.Context) error {
+	var id string = c.Param("id")
+
+	transaction := t.TransactionUsecase.GetByID(id)
+
+	if transaction.ID == 0 {
+		return ctrl.NewResponse(c, http.StatusNotFound, "failed", "transaction not found", "")
+	}
+
+	return ctrl.NewResponse(c, http.StatusOK, "success", "transaction found", response.FromDomain(transaction))
+}
+
+func (t *TransactionController) Update(c echo.Context) error {
+	input := request.Transaction{}
+
+	if err := c.Bind(&input); err != nil {
+		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", "")
+	}
+
+	var transactionId string = c.Param("id")
+
+	err := input.Validate()
+
+	if err != nil {
+		return ctrl.NewResponse(c, http.StatusBadRequest, "failed", "validation failed", "")
+	}
+
+	transaction := t.TransactionUsecase.Update(transactionId, input.ToDomain())
+
+	if transaction.ID == 0 {
+		return ctrl.NewResponse(c, http.StatusNotFound, "failed", "transaction not found", "")
+	}
+
+	return ctrl.NewResponse(c, http.StatusOK, "success", "transaction updated", response.FromDomain(transaction))
+}
+
+func (t *TransactionController) Delete(c echo.Context) error {
+	var transactionId string = c.Param("id")
+
+	isSuccess := t.TransactionUsecase.Delete(transactionId)
+
+	if !isSuccess {
+		return ctrl.NewResponse(c, http.StatusNotFound, "failed", "transaction not found", "")
+	}
+
+	return ctrl.NewResponse(c, http.StatusOK, "success", "transaction deleted", "")
+}

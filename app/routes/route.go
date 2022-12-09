@@ -50,7 +50,7 @@ func (cl *ControllerList) RouteRegister(e *echo.Echo) {
 	offices.GET("/facilities", cl.OfficeFacilityController.GetAll).Name = "get-all-office-facility"
 	offices.GET("/facilities/:id", cl.OfficeFacilityController.GetByOfficeID).Name = "get-office-facility-by-id"
 	offices.POST("/facilities/create", cl.OfficeFacilityController.Create).Name = "create-office-facility-list"
-	offices.GET("/type/office", cl.OfficeController.GetOffices).Name="get-offices"
+	offices.GET("/type/office", cl.OfficeController.GetOffices).Name = "get-offices"
 	offices.GET("/type/coworking-space", cl.OfficeController.GetCoworkingSpace).Name = "get-coworking-spaces"
 	offices.GET("/type/meeting-room", cl.OfficeController.GetMeetingRooms).Name = "get-meeting-rooms"
 	offices.GET("/recommendation", cl.OfficeController.GetRecommendation).Name = "recommendation-offices"
@@ -68,6 +68,9 @@ func (cl *ControllerList) RouteRegister(e *echo.Echo) {
 
 	transactions.GET("", cl.TransactionController.GetAll).Name = "get-all-transaction"
 	transactions.POST("", cl.TransactionController.Create).Name = "create-transaction"
+	transactions.GET("/:id", cl.TransactionController.GetByID).Name = "get-transaction-by-id"
+	transactions.PUT("/:id", cl.TransactionController.Update).Name = "update-transaction"
+	transactions.DELETE("/:id", cl.TransactionController.Delete).Name = "delete-transaction"
 
 	auth := e.Group("/api/v1", middleware.JWTWithConfig(cl.JWTMiddleware))
 	auth.POST("/logout", cl.AuthController.Logout).Name = "user-logout"

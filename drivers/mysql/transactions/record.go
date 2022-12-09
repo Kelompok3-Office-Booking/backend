@@ -11,8 +11,8 @@ type Transaction struct {
 	Price    uint           `json:"price"`
 	UserID   uint           `json:"user_id"`
 	OfficeID uint           `json:"office_id"`
-	User     users.User     `json:"user" gorm:""`
-	Office   offices.Office `json:"office" gorm:""`
+	User     users.User     `json:"user" gorm:"foreignKey:UserID;references:ID"`
+	Office   offices.Office `json:"office" gorm:"foreignKey:OfficeID;references:ID"`
 }
 
 func FromDomain(domain *TransactionUseCase.Domain) *Transaction {
