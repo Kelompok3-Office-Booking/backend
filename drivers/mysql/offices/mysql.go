@@ -715,12 +715,20 @@ func (or *officeRepository) GetNearest(lat string, long string) []offices.Domain
 	
 	// find nearest logic here
 	var distance []distance
+
+	// distance is in kilometer
 	queryGetDistance := fmt.Sprintf("SELECT `offices`.`id`, " + 
 		"CAST(" + 
-			"(SQRT(POW(69.1 * (`lat` - %s), 2) + POW(69.1 * (%s -`lng`) * COS(`lat` / 57.3), 2))) AS decimal(16,2)" +
-		") AS distance " + 
+			"SQRT(" + 
+				"POW(69.1 * (`offices`.`lat` - '%s'), 2) + " + 
+				"POW(69.1 * ('%s' - `offices`.`lng`) * " + 
+				"COS(`offices`.`lng` / 57.3), 2)) * 1.60934 " + 
+			"AS DECIMAL(16,2)) " + 
+		"AS distance " + 
 		"FROM `offices` " + 
-		"ORDER BY distance,`offices`.`id`", lat, long)
+		"HAVING distance < 40 " + 
+		"ORDER BY distance", lat, long)
+
 	or.conn.Raw(queryGetDistance).Scan(&distance)
 
 	officeDomain := []offices.Domain{}
