@@ -3,11 +3,11 @@ package utils
 func IsGeolocationStringInputAllowed(lat string, lng string) error {
 	var err error
 
-	if len(lat) != 10 {
+	if len(lat) <= 9 {
 		return &latError{}
 	}
 
-	if len(lng) != 11 {
+	if len(lng) <= 10 {
 		return &lngError{}
 	}
 
