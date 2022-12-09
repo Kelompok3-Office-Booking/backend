@@ -30,6 +30,10 @@ func NewAuthController(authUC users.Usecase) *AuthController {
 	}
 }
 
+func (ac *AuthController) HelloMessage(c echo.Context) error {
+	return c.String(http.StatusOK, "Hello there! This is Staging API for Better Space. Better Space is an Office Booking System Alterra Capstone Project Batch 3 by Group 3. Please refer to the documentation for details about all of the requests.")
+}
+
 func (ac *AuthController) Register(c echo.Context) error {
 	userInput := request.User{}
 
@@ -48,7 +52,7 @@ func (ac *AuthController) Register(c echo.Context) error {
 		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "password and confirmation password do not match")
 	}
 
-	const minEntropyBits = 45
+	const minEntropyBits = 30
 	err = passwordvalidator.Validate(userInput.Password, minEntropyBits)
 	
 	if err != nil {
@@ -79,17 +83,55 @@ func (ac *AuthController) Login(c echo.Context) error {
 
 	token := ac.authUsecase.Login(userInput.ToDomainLogin())
 
-	if token == "" {
-		return ctrl.NewInfoResponse(c, http.StatusUnauthorized, "failed", "invalid email or password")
+	if token["access_token"] == "" {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "invalid email or password")
 	}
 
 	return c.JSON(http.StatusOK, map[string]any{
-		"token": token,
+		"access_token": token["access_token"],
+		"refresh_token": token["refresh_token"],
+	})
+}
+
+func (ac *AuthController) Token(c echo.Context) error {
+	refreshTokenInput := c.Get("user").(*jwt.Token)
+
+	isListed := middlewares.CheckRefreshToken(refreshTokenInput.Raw)
+
+	if !isListed {
+		return ctrl.NewInfoResponse(c, http.StatusUnauthorized, "failed", "invalid refresh token")
+	}
+
+	payload := helper.GetPayloadInfo(c)
+	id := payload.ID
+	getUser := ac.authUsecase.GetByID(id)
+
+	if getUser.ID == 0 {
+		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "user not found")
+	}
+
+	newTokenPair := ac.authUsecase.Token(id, getUser.Roles)
+
+	if newTokenPair["access_token"] == "" {
+		return ctrl.NewInfoResponse(c, http.StatusUnauthorized, "failed", "invalid email or password")
+	}
+
+	middlewares.Logout(refreshTokenInput.Raw)
+
+	return c.JSON(http.StatusOK, map[string]any{
+		"access_token": newTokenPair["access_token"],
+		"refresh_token": newTokenPair["refresh_token"],
 	})
 }
 
 func (ac *AuthController) GetAll(c echo.Context) error {
-	users := []response.User{}
+	token := c.Get("user").(*jwt.Token)
+
+	isListed := middlewares.CheckToken(token.Raw)
+
+	if !isListed {
+		return ctrl.NewInfoResponse(c, http.StatusUnauthorized, "failed", "invalid token")
+	}
 
 	payload := helper.GetPayloadInfo(c)
 	role := payload.Roles
@@ -97,6 +139,8 @@ func (ac *AuthController) GetAll(c echo.Context) error {
 	if role != "admin" {
 		return ctrl.NewInfoResponse(c, http.StatusForbidden, "forbidden", "not allowed to access this info")
 	}
+	
+	users := []response.User{}
 
 	usersData := ac.authUsecase.GetAll()
 
@@ -108,17 +152,38 @@ func (ac *AuthController) GetAll(c echo.Context) error {
 }
 
 func (ac *AuthController) GetByID(c echo.Context) error {
-	payload := helper.GetPayloadInfo(c)
-	role := payload.Roles
-	userId := payload.ID
-	
+	var user users.Domain
+	token := c.Get("user").(*jwt.Token)
 	paramsId := c.Param("id")
 
-	if (role == "user") && (paramsId != userId) {
-		return ctrl.NewInfoResponse(c, http.StatusForbidden, "forbidden", "not allowed to access this info")
+	isListed := middlewares.CheckToken(token.Raw)
+
+	if !isListed {
+		return ctrl.NewInfoResponse(c, http.StatusUnauthorized, "failed", "invalid token")
+	}
+	
+	user = ac.authUsecase.GetByID(paramsId)
+
+	if user.ID == 0 {
+		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "user not found")
 	}
 
-	user := ac.authUsecase.GetByID(paramsId)
+	return ctrl.NewResponse(c, http.StatusOK, "success", "user found", response.FromDomain(user))
+}
+
+func (ac *AuthController) GetProfile(c echo.Context) error {
+	var user users.Domain
+	token := c.Get("user").(*jwt.Token)
+	payload := helper.GetPayloadInfo(c)
+	userId := payload.ID
+
+	isListed := middlewares.CheckToken(token.Raw)
+
+	if !isListed {
+		return ctrl.NewInfoResponse(c, http.StatusUnauthorized, "failed", "invalid token")
+	}
+
+	user = ac.authUsecase.GetByID(userId)
 
 	if user.ID == 0 {
 		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "user not found")
@@ -128,17 +193,24 @@ func (ac *AuthController) GetByID(c echo.Context) error {
 }
 
 func (ac *AuthController) Delete(c echo.Context) error {
+	var isSuccess bool
+	token := c.Get("user").(*jwt.Token)
 	payload := helper.GetPayloadInfo(c)
 	role := payload.Roles
 	userId := payload.ID
-	
 	paramsId := c.Param("id")
 
-	if (role == "user") && (paramsId != userId) {
-		return ctrl.NewInfoResponse(c, http.StatusForbidden, "forbidden", "not allowed to access this info")
+	isListed := middlewares.CheckToken(token.Raw)
+
+	if !isListed {
+		return ctrl.NewInfoResponse(c, http.StatusUnauthorized, "failed", "invalid token")
 	}
 
-	isSuccess := ac.authUsecase.Delete(paramsId)
+	if role == "admin" {
+		isSuccess = ac.authUsecase.Delete(paramsId)
+	} else if role == "user" {
+		isSuccess = ac.authUsecase.Delete(userId)
+	}
 
 	if !isSuccess {
 		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "user not found")
@@ -148,20 +220,20 @@ func (ac *AuthController) Delete(c echo.Context) error {
 }
 
 func (ac *AuthController) UpdateProfilePhoto(c echo.Context) error {
+	token := c.Get("user").(*jwt.Token)
 	payload := helper.GetPayloadInfo(c)
 	role := payload.Roles
 	userId := payload.ID
-	
 	paramsId := c.Param("id")
+	var getUser users.Domain
+	var isSuccess bool
+	var url string
+	var err error
 
-	if (role == "user") && (paramsId != userId) {
-		return ctrl.NewInfoResponse(c, http.StatusForbidden, "forbidden", "not allowed to access this info, check user id parameter")
-	}
+	isListed := middlewares.CheckToken(token.Raw)
 
-	getUser := ac.authUsecase.GetByID(paramsId)
-
-	if getUser.ID == 0 {
-		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "user not found")
+	if !isListed {
+		return ctrl.NewInfoResponse(c, http.StatusUnauthorized, "failed", "invalid token")
 	}
 
 	input := request.UserPhoto{}
@@ -195,10 +267,24 @@ func (ac *AuthController) UpdateProfilePhoto(c echo.Context) error {
 	}
 
 	defer src.Close()
-	
+  
 	ctx := context.Background()
 
-	url, err := helper.CloudinaryUpload(ctx, src, paramsId)
+	if role == "admin" {
+		getUser = ac.authUsecase.GetByID(paramsId)
+	} else if role == "user" {
+		getUser = ac.authUsecase.GetByID(userId)
+	}
+
+	if getUser.ID == 0 {
+		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "user not found")
+	}
+
+	if role == "user" {
+		url, err = helper.CloudinaryUpload(ctx, src, userId)
+	} else if role == "admin" {
+		url, err = helper.CloudinaryUpload(ctx, src, paramsId)
+	}
 	
 	if err != nil {
 		log.Println(err)
@@ -211,7 +297,11 @@ func (ac *AuthController) UpdateProfilePhoto(c echo.Context) error {
 		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "validation failed")
 	}
 
-	isSuccess := ac.authUsecase.UpdateProfilePhoto(paramsId, input.ToDomainPhoto())
+	if role == "admin" {
+		isSuccess = ac.authUsecase.UpdateProfilePhoto(paramsId, input.ToDomainPhoto())
+	} else {
+		isSuccess = ac.authUsecase.UpdateProfilePhoto(userId, input.ToDomainPhoto())
+	}
 
 	if !isSuccess {
 		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "failed to update")
@@ -221,18 +311,24 @@ func (ac *AuthController) UpdateProfilePhoto(c echo.Context) error {
 }
 
 func (ac *AuthController) UpdateProfileData(c echo.Context) error {
+	token := c.Get("user").(*jwt.Token)
 	payload := helper.GetPayloadInfo(c)
 	role := payload.Roles
 	userId := payload.ID
-	
 	paramsId := c.Param("id")
+	var userData users.Domain
 
-	// preventing user from updating another user data
-	if (role == "user") && (paramsId != userId) {
-		return ctrl.NewInfoResponse(c, http.StatusForbidden, "forbidden", "not allowed to access this info, check user id parameter")
+	isListed := middlewares.CheckToken(token.Raw)
+
+	if !isListed {
+		return ctrl.NewInfoResponse(c, http.StatusUnauthorized, "failed", "invalid token")
 	}
 
-	userData := ac.authUsecase.GetByID(paramsId)
+	if role == "admin" {
+		userData = ac.authUsecase.GetByID(paramsId)
+	} else if role == "user" {
+		userData = ac.authUsecase.GetByID(userId)
+	}
 
 	if userData.ID == 0 {
 		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", "user not found")
@@ -241,27 +337,11 @@ func (ac *AuthController) UpdateProfileData(c echo.Context) error {
 	input := request.User{}
 
 	if err := c.Bind(&input); err != nil {
-		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "validation failed")
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "bind failed")
 	}
 
-	// check if body request is filled or not
-	if input.FullName == "" && input.Gender == "" && input.Email == "" {
-		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "validation failed, please input data in body request")
-	}
-
-	// if full_name in body request is null
-	if input.FullName == "" {
-		input.FullName = userData.FullName
-	}
-
-	// if gender in body request is null
-	if input.Gender == "" {
-		input.Gender = userData.Gender
-	}
-
-	// if email in body request is null
-	if input.Email == "" {
-		input.Email = userData.Email
+	if input.Email == "" && input.FullName == "" && input.Gender == "" {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "please input body request")
 	}
 
 	// fill other entity with existed data
@@ -276,21 +356,56 @@ func (ac *AuthController) UpdateProfileData(c echo.Context) error {
 		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "validation failed, check body request")
 	}
 
-	user := ac.authUsecase.UpdateProfileData(paramsId, input.ToDomainRegister())
+	if role == "user" {
+		userData = ac.authUsecase.UpdateProfileData(userId, input.ToDomainRegister())
+	} else if role == "admin" {
+		userData = ac.authUsecase.UpdateProfileData(paramsId, input.ToDomainRegister())
+	}
 
-	return ctrl.NewResponse(c, http.StatusOK, "success", "profile updated", response.FromDomain(user))
+	// return failed if email already used
+	if userData.ID == 0 {
+		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", "email already used by another account, please use another email")
+	}
+
+	return ctrl.NewResponse(c, http.StatusOK, "success", "profile updated", response.FromDomain(userData))
 }
 
-func (ac *AuthController) Logout(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
+func (ac *AuthController) SearchByEmail(c echo.Context) error {
+	token := c.Get("user").(*jwt.Token)
+	payload := helper.GetPayloadInfo(c)
+	role := payload.Roles
+	var email string = c.QueryParam("search")
 
-	isListed := middlewares.CheckToken(user.Raw)
+	isListed := middlewares.CheckToken(token.Raw)
 
 	if !isListed {
 		return ctrl.NewInfoResponse(c, http.StatusUnauthorized, "failed", "invalid token")
 	}
 
-	middlewares.Logout(user.Raw)
+	// only admin allowed
+	if role != "admin" {
+		return ctrl.NewInfoResponse(c, http.StatusForbidden, "forbidden", "not allowed to access this info")
+	}
+
+	user := ac.authUsecase.SearchByEmail(email)
+
+	if user.ID == 0 {
+		return ctrl.NewInfoResponse(c, http.StatusNotFound, "failed", fmt.Sprintf("user with email %s not found", email))
+	}
+
+	return ctrl.NewResponse(c, http.StatusOK, "success", fmt.Sprintf("user with email %s found", email), response.FromDomain(user))
+}
+
+func (ac *AuthController) Logout(c echo.Context) error {
+	token := c.Get("user").(*jwt.Token)
+
+	isListed := middlewares.CheckToken(token.Raw)
+
+	if !isListed {
+		return ctrl.NewInfoResponse(c, http.StatusUnauthorized, "failed", "invalid token")
+	}
+
+	middlewares.Logout(token.Raw)
 
 	return ctrl.NewInfoResponse(c, http.StatusOK, "success", "logout success")
 }

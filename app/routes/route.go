@@ -24,17 +24,32 @@ type ControllerList struct {
 }
 
 func (cl *ControllerList) RouteRegister(e *echo.Echo) {
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowHeaders: []string{
+			echo.HeaderOrigin,
+			echo.HeaderContentType,
+			echo.HeaderAccept,
+			echo.HeaderAuthorization,
+			echo.HeaderServer,
+		},
+	}))
+	
 	e.Use(cl.LoggerMiddleware)
 
-	e.POST("/api/v1/register", cl.AuthController.Register)
-	e.POST("/api/v1/login", cl.AuthController.Login)
+	e.GET("/", cl.AuthController.HelloMessage)
+  
+	v1 := e.Group("/api/v1")
+  
+	// endpoint login, register, access refresh token
+	v1.GET("", cl.AuthController.HelloMessage)
+  v1.POST("/register", cl.AuthController.Register)
+	v1.POST("/login", cl.AuthController.Login)
+	v1.POST("/refresh", cl.AuthController.Token, middleware.JWTWithConfig(cl.JWTMiddleware))
+	v1.POST("/logout", cl.AuthController.Logout, middleware.JWTWithConfig(cl.JWTMiddleware)).Name = "user-logout"
 
-	users := e.Group("/api/v1/users", middleware.JWTWithConfig(cl.JWTMiddleware))
-	users.GET("", cl.AuthController.GetAll).Name = "get-all-user"
-	users.GET("/:id", cl.AuthController.GetByID).Name = "get-user-by-id"
-	users.DELETE("/:id", cl.AuthController.Delete).Name = "delete-user-account"
-	users.PUT("/profile-photo/:id", cl.AuthController.UpdateProfilePhoto).Name = "update-user-profile-photo"
-	users.PUT("/:id", cl.AuthController.UpdateProfileData).Name = "update-profile-data"
+	// endpoint admin
+	admin := v1.Group("/admin", middleware.JWTWithConfig(cl.JWTMiddleware))
 
 	offices := e.Group("/api/v1/offices", middleware.JWTWithConfig(cl.JWTMiddleware))
 
@@ -72,6 +87,19 @@ func (cl *ControllerList) RouteRegister(e *echo.Echo) {
 	transactions.PUT("/:id", cl.TransactionController.Update).Name = "update-transaction"
 	transactions.DELETE("/:id", cl.TransactionController.Delete).Name = "delete-transaction"
 
-	auth := e.Group("/api/v1", middleware.JWTWithConfig(cl.JWTMiddleware))
-	auth.POST("/logout", cl.AuthController.Logout).Name = "user-logout"
+	// endpoint admin : manage user
+	userAdmin := admin.Group("/users")
+	userAdmin.GET("", cl.AuthController.GetAll).Name = "admin-get-all-user"
+	userAdmin.GET("/:id", cl.AuthController.GetByID).Name = "admin-get-user-by-id"
+	userAdmin.DELETE("/:id", cl.AuthController.Delete).Name = "admin-delete-user-account"
+	userAdmin.PUT("/photo/:id", cl.AuthController.UpdateProfilePhoto).Name = "admin-update-user-profile-photo"
+	userAdmin.PUT("/:id", cl.AuthController.UpdateProfileData).Name = "admin-update-user-profile-data"
+	userAdmin.GET("/email", cl.AuthController.SearchByEmail).Name = "admin-search-user-by-email"
+
+	// endpoint user
+	profile := v1.Group("/profile", middleware.JWTWithConfig(cl.JWTMiddleware))
+	profile.GET("", cl.AuthController.GetByID).Name = "get-user-by-id"
+	profile.DELETE("", cl.AuthController.Delete).Name = "delete-user-account"
+	profile.PUT("/photo", cl.AuthController.UpdateProfilePhoto).Name = "update-user-profile-photo"
+	profile.PUT("", cl.AuthController.UpdateProfileData).Name = "update-user-profile-data"
 }
