@@ -98,7 +98,7 @@ func (oc *OfficeController) Create(c echo.Context) error {
 		return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", filesCheckMsg)
 	}
 
-	imageURLs, err = helper.CloudinaryUploadOfficeImgs(files, input.Title)
+	imageURLs, err = helper.CloudinaryUploadOfficeImgs(files)
 
 	if err != nil {
 		return ctrl.NewInfoResponse(c, http.StatusConflict, "failed", "conflict when upload file in cloud image")
@@ -184,7 +184,7 @@ func (oc *OfficeController) Update(c echo.Context) error {
 			return ctrl.NewInfoResponse(c, http.StatusBadRequest, "failed", filesCheckMsg)
 		}
 
-		imageURLs, err = helper.CloudinaryUploadOfficeImgs(files, input.Title)
+		imageURLs, err = helper.CloudinaryUploadOfficeImgs(files)
 
 		if err != nil {
 			return ctrl.NewInfoResponse(c, http.StatusConflict, "failed", "conflict when upload file in cloud image")

@@ -10,17 +10,17 @@ func (e *timeError) Error() string {
 }
 
 func (e *stringOfIntSliceError) Error() string {
-	return "input only number"
+	return "wrong body request, please input number only"
 }
 
 func (e *latError) Error() string {
-	return "incorret latitude input, " + 
+	return "incorret latitude query parameter, " + 
 	"'-x.xxxxxxx' is the correct format, " + 
 	"the precision of the number after the decimal point is seven digits"
 }
 
 func (e *lngError) Error() string {
-	return "incorret longitude input, " + 
+	return "incorret longitude query parameter, " + 
 	"'xxx.xxxxxxx' is the correct format, " + 
 	"the precision of the number after the decimal point is seven digits"
 }

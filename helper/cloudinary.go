@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"backend/utils"
 	_util "backend/utils"
 	"context"
 	"fmt"
@@ -34,7 +35,7 @@ func CloudinaryUpload(ctx context.Context, source multipart.File, userId string)
 	return url, err
 }
 
-func CloudinaryUploadOfficeImgs(files []*multipart.FileHeader, officeName string) ([]string, error) {
+func CloudinaryUploadOfficeImgs(files []*multipart.FileHeader) ([]string, error) {
 	ctx := context.Background()
 	cloudinaryCloud := _util.GetConfig("CLOUDINARY_CLOUD")
 	cloudinaryKey := _util.GetConfig("CLOUDINARY_KEY")
@@ -53,7 +54,7 @@ func CloudinaryUploadOfficeImgs(files []*multipart.FileHeader, officeName string
 			return imageURLs, err
 		}
 
-		fileName := fmt.Sprintf("office-%s-gambar-ke-%d", officeName, i)
+		fileName := utils.RandomString(25)
 
 		// upload image and set the PublicID to fileName.
 		resp, err := cld.Upload.Upload(
